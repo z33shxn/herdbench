@@ -1,0 +1,4 @@
+HerdBench pre-registration, version 1
+commit f20550163724caff8fc78429c6c780269b78f290
+sha256(docs/preregistration.md) ae32842f15e2e8b50b533be7da8220d36e43232c0fb0eac18e80a1c5d88253e1
+registered 2026-11-18, before any proxy-versus-truth statistic was computed
