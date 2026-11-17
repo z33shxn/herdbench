@@ -1,0 +1,99 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "herdbench"
+version = "1.0.0"
+description = "Grade public crowding signals against observed, all-account positions on a fully transparent derivatives venue."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "Mohammed Zeeshan" }]
+keywords = ["crowding", "positioning", "market microstructure", "hyperliquid", "perpetual futures",
+            "short interest", "risk", "quantitative finance", "benchmark"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Office/Business :: Financial :: Investment",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Typing :: Typed",
+]
+dependencies = [
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "pyarrow>=14",
+    "polars>=1.0",
+    "scipy>=1.10",
+    "requests>=2.31",
+    "tzdata>=2022.7",
+]
+
+[project.optional-dependencies]
+report = ["matplotlib>=3.7"]
+dev = [
+    "matplotlib>=3.7",
+    "pytest>=8",
+    "pytest-cov>=5",
+    "hypothesis>=6.100",
+    "statsmodels>=0.14",
+    "ruff>=0.6",
+    "mypy>=1.10",
+    "pandas-stubs>=2.0",
+    "types-requests>=2.31",
+]
+
+[project.scripts]
+herdbench = "herdbench.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/z33shxn/herdbench"
+Documentation = "https://github.com/z33shxn/herdbench/tree/main/docs"
+Issues = "https://github.com/z33shxn/herdbench/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+herdbench = ["data/*.parquet", "data/*.json", "py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra --strict-markers -m 'not network'"
+markers = ["network: needs internet access to the public data sources (opt-in: -m network)"]
+filterwarnings = ["error::FutureWarning", "ignore::DeprecationWarning:dateutil.*", "ignore:Sortedness of columns cannot be checked:UserWarning"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "N", "C4", "PT", "NPY"]
+ignore = ["N803", "N806", "RUF001", "RUF002", "RUF003"]
+
+[tool.mypy]
+python_version = "3.10"
+files = ["src/herdbench"]
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+check_untyped_defs = true
+no_implicit_optional = true
+
+[tool.coverage.run]
+source = ["herdbench"]
+branch = true
+
+[tool.coverage.report]
+skip_covered = true
+show_missing = true

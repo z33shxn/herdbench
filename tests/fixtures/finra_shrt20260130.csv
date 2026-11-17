@@ -1,0 +1,7 @@
+accountingYearMonthNumber|symbolCode|issueName|issuerServicesGroupExchangeCode|marketClassCode|currentShortPositionQuantity|previousShortPositionQuantity|stockSplitFlag|averageDailyVolumeQuantity|daysToCoverQuantity|revisionFlag|changePercent|changePreviousNumber|settlementDate
+20260130|AAPL|Apple Inc. Common Stock|R|NNM|116854414|113576032||58429082|2.00||2.89|3278382|2026-01-30
+20260130|CL|Colgate-Palmolive Company|A|NYSE|15274525|16341336||7694740|1.99||-6.53|-1066811|2026-01-30
+20260130|GOLD|Gold.com, Inc.|A|NYSE|2091082|1919746||1039784|2.01||8.92|171336|2026-01-30
+20260130|NVDA|NVIDIA Corporation Common Stoc|R|NNM|257091247|261838673||164060286|1.57||-1.81|-4747426|2026-01-30
+20260130|SPY|State Street SPDR S&P 500 ETF|E|ARCA|109516152|107394148||83540222|1.31||1.98|2122004|2026-01-30
+20260130|TSLA|Tesla, Inc. Common Stock|R|NNM|64365617|64410264||61755685|1.04||-0.07|-44647|2026-01-30

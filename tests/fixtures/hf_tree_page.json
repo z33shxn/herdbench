@@ -1,0 +1,125 @@
+{
+ "link_header_example": "<https://huggingface.co/api/datasets/craftify2221/hyperliquid-fills-raw/tree/de05dc101c819aa68accfefd6647b8bf6de02189?expand=false&recursive=true&limit=1000&cursor=ZXlKbWFXeGxYMjVoYldVaU9pSmhkbDloY21Ob2FYWmxMMlJoZEdVOU1qQXlOaTB3TnkweU5TOHhNRGcxTURFd01EQXdYekUzT0RRNU16Z3hPRGc1T0RndWNHRnljWFZsZENJc0luUnlaV1ZmYjJsa0lqb2laR0k1TnpCbE56TTNZbVJrTlRjM09XVTBZV1ZrTlRCaFpqRTBNMkV5TXpaaFlqVTJOV1F4TnlKOToxMDAw>; rel=\"next\"",
+ "entries": [
+  {
+   "type": "directory",
+   "oid": "5cb9e2a8c7d234888695107da4b5f30c76c6c07e",
+   "size": 0,
+   "path": "av_archive"
+  },
+  {
+   "type": "file",
+   "oid": "bed0738c7eeb449bca98b5d2f33c89a1ee56349a",
+   "size": 2504,
+   "path": ".gitattributes"
+  },
+  {
+   "type": "file",
+   "oid": "b278a0b5ca3cbdc428c2a465e76be2d8d7aabbf7",
+   "size": 15519959,
+   "lfs": {
+    "oid": "bb383e387fe462c4eec5298b8fb63934d8fc7ba5a3551e44db57b980bb486ad7",
+    "size": 15519959,
+    "pointerSize": 133
+   },
+   "xetHash": "15c3ae2e1c627f68bb09a1e0c07ac04d1ebf0eaac5504c33438e24ef6e929624",
+   "path": "av_archive/date=2025-07-29/678380000_1753747400783.parquet"
+  },
+  {
+   "type": "file",
+   "oid": "21041f765935b4daac1a630de1c1edb74e755dfa",
+   "size": 12794566,
+   "lfs": {
+    "oid": "8e2bc43fd724335d6bf4e4e6aa990d4f491f15450f004172050190277a2f0262",
+    "size": 12794566,
+    "pointerSize": 133
+   },
+   "xetHash": "1ee4848f5a48834e942eacff1b3439e43d0a6325412eb509b23c51c563993f94",
+   "path": "perp_archive/date=2025-07-29/678380000_1753747400783.parquet"
+  },
+  {
+   "type": "file",
+   "oid": "be4be857ef6f2b2189f288418b93d71b4e0e3c7b",
+   "size": 13195980,
+   "lfs": {
+    "oid": "655275b88886a67387b17a622e6218681ef7bf555b2052e2d2966e6ea52d2198",
+    "size": 13195980,
+    "pointerSize": 133
+   },
+   "xetHash": "a550091bd21e862b5a785cbb152fb906393f06619d99ad58ee4932be31c9d284",
+   "path": "perp_archive/date=2025-07-30/679470000_1753833896387.parquet"
+  },
+  {
+   "type": "file",
+   "oid": "fc1706fdd0bce992ac319fdd5cb94c5898d1d890",
+   "size": 12901565,
+   "lfs": {
+    "oid": "a3ea4415d5e82daf0753f2bc6405151805b27b839b1545588a0c508cb7ffdc39",
+    "size": 12901565,
+    "pointerSize": 133
+   },
+   "xetHash": "8ca33d670800d33bdac7eb44a6e4b532609b4e9f0d374afcca25cc0657bd268a",
+   "path": "perp_archive/date=2025-07-31/680560000_1753920314307.parquet"
+  },
+  {
+   "type": "file",
+   "oid": "18ef095f6bc74696b23bfc5bcb042ef5ad7f40b8",
+   "size": 16298512,
+   "lfs": {
+    "oid": "ccbe49b423114b07d1d8eb5d54c34445d6076885bdc249435f4e26b455fb8b57",
+    "size": 16298512,
+    "pointerSize": 133
+   },
+   "xetHash": "1a44df1dad05897652d27ca8d8ecee3e967ebca85aca20d03c3d225720d6c583",
+   "path": "perp_archive/date=2026-03-24/933300000_1774310589265.parquet"
+  },
+  {
+   "type": "file",
+   "oid": "f25912132f5afb68aa34f32ee9e827ec9c4ca591",
+   "size": 15994857,
+   "lfs": {
+    "oid": "dbd396e58c3e2844196707311818e84baf98eb91ccd7272dcc50c8b04a2d9b76",
+    "size": 15994857,
+    "pointerSize": 133
+   },
+   "xetHash": "493cf994b2402ac844e2af1225b9b4202cf4d65ecd8ffa4e5304447f357b5b83",
+   "path": "perp_archive/date=2026-03-24/933720000_1774346166351.parquet"
+  },
+  {
+   "type": "file",
+   "oid": "e31f711da1d8ae716ff25191f00ce46c3414530f",
+   "size": 573308360,
+   "lfs": {
+    "oid": "c1ffff290ee8034df2bcec5e042c30375acc089ca534f5432e6fa702d6d41150",
+    "size": 573308360,
+    "pointerSize": 134
+   },
+   "xetHash": "863cd283fb7511c02a314f2de45cdf82cf17695fef9b517509c441daa058bd8b",
+   "path": "fills_raw_2025-07-28.parquet"
+  },
+  {
+   "type": "file",
+   "oid": "999b0a884ed6f863b37965db794991120c8513dd",
+   "size": 568137802,
+   "lfs": {
+    "oid": "9d40144af89e75ac3bf3d2ee35394d7a14304ae8d45b4b5c6f1f4dd4fdd25ee3",
+    "size": 568137802,
+    "pointerSize": 134
+   },
+   "xetHash": "d2783864ddcbfecaef71d19d375dfab73f7d397cdacd2195b13bc098fab51746",
+   "path": "fills_raw_2025-07-29.parquet"
+  },
+  {
+   "type": "file",
+   "oid": "e31f711da1d8ae716ff25191f00ce46c3414530f",
+   "size": 573308360,
+   "lfs": {
+    "oid": "c1ffff290ee8034df2bcec5e042c30375acc089ca534f5432e6fa702d6d41150",
+    "size": 573308360,
+    "pointerSize": 134
+   },
+   "xetHash": "863cd283fb7511c02a314f2de45cdf82cf17695fef9b517509c441daa058bd8b",
+   "path": "fills/fills_raw_2025-07-28.parquet"
+  }
+ ]
+}

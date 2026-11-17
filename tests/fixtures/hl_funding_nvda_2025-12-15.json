@@ -1,0 +1,146 @@
+[
+ {
+  "coin": "xyz:NVDA",
+  "fundingRate": "0.0000256156",
+  "premium": "0.0005049246",
+  "time": 1765756800088
+ },
+ {
+  "coin": "xyz:NVDA",
+  "fundingRate": "0.0001545115",
+  "premium": "0.001536092",
+  "time": 1765760400010
+ },
+ {
+  "coin": "xyz:NVDA",
+  "fundingRate": "0.0000047315",
+  "premium": "-0.0002621479",
+  "time": 1765764000047
+ },
+ {
+  "coin": "xyz:NVDA",
+  "fundingRate": "-0.0000025846",
+  "premium": "-0.0003206767",
+  "time": 1765767600076
+ },
+ {
+  "coin": "xyz:NVDA",
+  "fundingRate": "0.0000125",
+  "premium": "-0.0000417553",
+  "time": 1765771200021
+ },
+ {
+  "coin": "xyz:NVDA",
+  "fundingRate": "0.0000125",
+  "premium": "-0.0001516463",
+  "time": 1765774800059
+ },
+ {
+  "coin": "xyz:NVDA",
+  "fundingRate": "0.0000125",
+  "premium": "-0.0001525809",
+  "time": 1765778400047
+ },
+ {
+  "coin": "xyz:NVDA",
+  "fundingRate": "0.0000125",
+  "premium": "-0.0000547565",
+  "time": 1765782000042
+ },
+ {
+  "coin": "xyz:NVDA",
+  "fundingRate": "-0.0000008777",
+  "premium": "-0.0003070218",
+  "time": 1765785600082
+ },
+ {
+  "coin": "xyz:NVDA",
+  "fundingRate": "0.0000125",
+  "premium": "-0.0001412175",
+  "time": 1765789200059
+ },
+ {
+  "coin": "xyz:NVDA",
+  "fundingRate": "0.0000125",
+  "premium": "-0.0000240351",
+  "time": 1765792800075
+ },
+ {
+  "coin": "xyz:NVDA",
+  "fundingRate": "0.0000013719",
+  "premium": "-0.0002890247",
+  "time": 1765796400123
+ },
+ {
+  "coin": "xyz:NVDA",
+  "fundingRate": "-0.0000360078",
+  "premium": "-0.0005880626",
+  "time": 1765800000009
+ },
+ {
+  "coin": "xyz:NVDA",
+  "fundingRate": "-0.0000023569",
+  "premium": "-0.0003188555",
+  "time": 1765803600004
+ },
+ {
+  "coin": "xyz:NVDA",
+  "fundingRate": "0.0000125",
+  "premium": "-0.0000854348",
+  "time": 1765807200067
+ },
+ {
+  "coin": "xyz:NVDA",
+  "fundingRate": "0.0000101184",
+  "premium": "-0.0002190526",
+  "time": 1765810800001
+ },
+ {
+  "coin": "xyz:NVDA",
+  "fundingRate": "-0.0000003031",
+  "premium": "-0.0003024248",
+  "time": 1765814400063
+ },
+ {
+  "coin": "xyz:NVDA",
+  "fundingRate": "0.0000125",
+  "premium": "-0.0001405435",
+  "time": 1765818000112
+ },
+ {
+  "coin": "xyz:NVDA",
+  "fundingRate": "0.0000125",
+  "premium": "-0.0001295828",
+  "time": 1765821600057
+ },
+ {
+  "coin": "xyz:NVDA",
+  "fundingRate": "0.0000125",
+  "premium": "0.0000114178",
+  "time": 1765825200060
+ },
+ {
+  "coin": "xyz:NVDA",
+  "fundingRate": "0.0000125",
+  "premium": "0.0000066476",
+  "time": 1765828800032
+ },
+ {
+  "coin": "xyz:NVDA",
+  "fundingRate": "0.0000125",
+  "premium": "0.0001379859",
+  "time": 1765832400059
+ },
+ {
+  "coin": "xyz:NVDA",
+  "fundingRate": "0.0000125",
+  "premium": "0.0003449943",
+  "time": 1765836000047
+ },
+ {
+  "coin": "xyz:NVDA",
+  "fundingRate": "0.0000167395",
+  "premium": "0.0004339161",
+  "time": 1765839600069
+ }
+]
