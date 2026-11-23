@@ -33,13 +33,15 @@ def test_block_length_rule_clips_to_the_preregistered_range():
 
 def panel(T, M, rho, seed, ar=0.0):
     rng = np.random.default_rng(seed)
+
     def series():
         z = rng.normal(size=(T, M))
         for t in range(1, T):
-            z[t] = ar * z[t - 1] + math.sqrt(1 - ar ** 2) * z[t]
+            z[t] = ar * z[t - 1] + math.sqrt(1 - ar**2) * z[t]
         return z
+
     x = series()
-    y = rho * x + math.sqrt(1 - rho ** 2) * series()
+    y = rho * x + math.sqrt(1 - rho**2) * series()
     idx = pd.date_range("2025-09-01", periods=T, freq="D")
     cols = [f"m{i}" for i in range(M)]
     return pd.DataFrame(x, idx, cols), pd.DataFrame(y, idx, cols)
@@ -64,15 +66,18 @@ def test_rotation_null_flags_a_planted_relation_and_not_an_unrelated_one():
     assert abs(z0) < np.percentile(np.abs(null0), 99)
 
 
-@pytest.mark.parametrize(("z", "p_holm", "rot", "fe", "ci90", "expected"), [
-    (0.30, 0.001, 0.10, 0.20, (0.20, 0.40), "confirmed"),
-    (-0.30, 0.001, 0.10, -0.20, (-0.40, -0.20), "reversed"),
-    (0.30, 0.001, 0.10, -0.20, (0.20, 0.40), "inconclusive"),    # fixed-effects slope disagrees
-    (0.30, 0.20, 0.10, 0.20, (0.20, 0.40), "inconclusive"),      # fails Holm
-    (0.30, 0.001, 0.40, 0.20, (0.20, 0.40), "inconclusive"),     # inside the rotation null
-    (0.01, 0.80, 0.10, 0.01, (-0.05, 0.07), "uninformative"),    # 90% CI inside (-0.10, 0.10)
-    (0.01, 0.80, 0.10, 0.01, (-0.12, 0.07), "inconclusive"),
-])
+@pytest.mark.parametrize(
+    ("z", "p_holm", "rot", "fe", "ci90", "expected"),
+    [
+        (0.30, 0.001, 0.10, 0.20, (0.20, 0.40), "confirmed"),
+        (-0.30, 0.001, 0.10, -0.20, (-0.40, -0.20), "reversed"),
+        (0.30, 0.001, 0.10, -0.20, (0.20, 0.40), "inconclusive"),  # fixed-effects slope disagrees
+        (0.30, 0.20, 0.10, 0.20, (0.20, 0.40), "inconclusive"),  # fails Holm
+        (0.30, 0.001, 0.40, 0.20, (0.20, 0.40), "inconclusive"),  # inside the rotation null
+        (0.01, 0.80, 0.10, 0.01, (-0.05, 0.07), "uninformative"),  # 90% CI inside (-0.10, 0.10)
+        (0.01, 0.80, 0.10, 0.01, (-0.12, 0.07), "inconclusive"),
+    ],
+)
 def test_verdict_rules(z, p_holm, rot, fe, ci90, expected):
     assert inference.verdict(z, p_holm, rot, fe, ci90, expected_sign=1, alpha=0.05, bound=0.10) == expected
 
@@ -84,19 +89,25 @@ def test_rank_intervals_and_dominance_from_joint_draws():
     assert r.loc["a", "rank"] == 1
     assert (r.loc["a", "rank_lo"], r.loc["a", "rank_hi"]) == (1, 1)  # a is always first by |z|
     assert inference.outranks(draws, "a", "b") == pytest.approx(1.0)
-    assert 0.2 < inference.outranks(draws, "c", "b") < 0.8           # c is too uncertain to claim either way
+    assert 0.2 < inference.outranks(draws, "c", "b") < 0.8  # c is too uncertain to claim either way
 
 
 def test_stability_requires_enough_verdicts_and_same_signs():
     halves = {"a": (0.3, 0.32), "b": (0.2, 0.25), "c": (0.1, 0.12), "d": (-0.2, -0.18)}
-    ses = {k: (0.03, 0.03) for k in halves}
-    out = inference.stability(halves, ses, verdicts={"a": "confirmed", "b": "confirmed", "c": "confirmed", "d": "reversed"},
-                              tau_threshold=0.4, min_verdicts=3)
+    ses = dict.fromkeys(halves, (0.03, 0.03))
+    out = inference.stability(
+        halves,
+        ses,
+        verdicts={"a": "confirmed", "b": "confirmed", "c": "confirmed", "d": "reversed"},
+        tau_threshold=0.4,
+        min_verdicts=3,
+    )
     assert out["ranking_claimed"] is True
     assert out["tau"] == pytest.approx(1.0)
     assert out["unstable"] == []
-    flip = inference.stability({"a": (0.3, -0.2)}, {"a": (0.03, 0.03)}, verdicts={"a": "confirmed"},
-                               tau_threshold=0.4, min_verdicts=3)
+    flip = inference.stability(
+        {"a": (0.3, -0.2)}, {"a": (0.03, 0.03)}, verdicts={"a": "confirmed"}, tau_threshold=0.4, min_verdicts=3
+    )
     assert flip["ranking_claimed"] is False
     assert flip["unstable"] == ["a"]
 

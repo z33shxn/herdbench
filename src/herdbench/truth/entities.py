@@ -31,7 +31,7 @@ def build_map(roles: dict[str, tuple[str, str | None]], subs: dict[str, list[str
     return emap
 
 
-def _load(store: Path) -> tuple[dict[str, tuple[str, str | None]], dict[str, list[str]]]:
+def load_store(store: Path) -> tuple[dict[str, tuple[str, str | None]], dict[str, list[str]]]:
     roles: dict[str, tuple[str, str | None]] = {}
     subs: dict[str, list[str]] = {}
     if store.exists():
@@ -51,7 +51,7 @@ def fetch_roles(targets: Iterable[str], api, store: Path) -> tuple[dict, dict]:
     """
     store = Path(store)
     store.parent.mkdir(parents=True, exist_ok=True)
-    roles, subs = _load(store)
+    roles, subs = load_store(store)
     with open(store, "a", encoding="utf-8") as fh:
         for address in (t.lower() for t in targets):
             if address not in roles:
@@ -73,8 +73,11 @@ def attach(positions: pl.DataFrame, emap: dict[str, str], user_col: str = "user"
     if not emap:
         return positions.with_columns(entity=pl.col(user_col))
     mapping = pl.DataFrame({user_col: list(emap), "_entity": list(emap.values())})
-    return (positions.join(mapping, on=user_col, how="left")
-            .with_columns(entity=pl.coalesce(pl.col("_entity"), pl.col(user_col))).drop("_entity"))
+    return (
+        positions.join(mapping, on=user_col, how="left")
+        .with_columns(entity=pl.coalesce(pl.col("_entity"), pl.col(user_col)))
+        .drop("_entity")
+    )
 
 
 def map_hash(emap: dict[str, str]) -> str:

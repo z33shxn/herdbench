@@ -12,6 +12,7 @@ Panels are wide pandas frames: rows are snapshot dates, columns are markets. Eve
 from __future__ import annotations
 
 import math
+import warnings
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 
@@ -55,7 +56,8 @@ def _column_spearman(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarr
     rx = sps.rankdata(x, axis=0, nan_policy="omit")
     ry = sps.rankdata(y, axis=0, nan_policy="omit")
     n = np.sum(~np.isnan(rx), axis=0)
-    with np.errstate(invalid="ignore", divide="ignore"):
+    with np.errstate(invalid="ignore", divide="ignore"), warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)  # all-missing columns: rho is NaN, as intended
         mx = np.nanmean(rx, axis=0)
         my = np.nanmean(ry, axis=0)
         dx, dy = rx - mx, ry - my
@@ -91,8 +93,9 @@ def block_indices(n_rows: int, block: int, reps: int, seed: int) -> np.ndarray:
     return idx.reshape(reps, n_blocks * block)[:, :n_rows]
 
 
-def ts_statistic(proxy: pd.DataFrame, truth: pd.DataFrame, min_days: int, bootstrap_reps: int = 0,
-                 block: int = 20, seed: int = 0) -> TsResult:
+def ts_statistic(
+    proxy: pd.DataFrame, truth: pd.DataFrame, min_days: int, bootstrap_reps: int = 0, block: int = 20, seed: int = 0
+) -> TsResult:
     x, y, _idx, cols = _aligned(proxy, truth)
     rho, n = _column_spearman(x, y)
     use = (n >= min_days) & ~np.isnan(rho)
@@ -138,7 +141,7 @@ def xs_statistic(proxy: pd.DataFrame, truth: pd.DataFrame, min_markets: int, lag
     return XsResult(value, se, p, int(series.size), series)
 
 
-def newey_west_se(x: Sequence[float], lags: int) -> float:
+def newey_west_se(x: Sequence[float] | np.ndarray, lags: int) -> float:
     """Standard error of the mean with a Bartlett kernel; equals statsmodels' OLS HAC on a constant."""
     v = np.asarray(x, dtype=float)
     u = v - v.mean()
@@ -152,7 +155,7 @@ def newey_west_se(x: Sequence[float], lags: int) -> float:
 def _cluster_var(xu: np.ndarray, groups: np.ndarray, sxx: float, nobs: int, k: int = 1) -> float:
     sums = pd.Series(xu).groupby(groups).sum().to_numpy()
     g = sums.size
-    return float(sums @ sums) / sxx ** 2 * (g / (g - 1)) * ((nobs - 1) / (nobs - k))
+    return float(sums @ sums) / sxx**2 * (g / (g - 1)) * ((nobs - 1) / (nobs - k))
 
 
 def ols_cluster(y: Sequence[float], x: Sequence[float], groups: Sequence) -> tuple[float, float]:
@@ -164,7 +167,9 @@ def ols_cluster(y: Sequence[float], x: Sequence[float], groups: Sequence) -> tup
     return beta, math.sqrt(_cluster_var(xv * u, np.asarray(groups), sxx, xv.size))
 
 
-def twoway_demean(v: np.ndarray, g1: np.ndarray, g2: np.ndarray, tol: float = 1e-13, max_iter: int = 100_000) -> np.ndarray:
+def twoway_demean(
+    v: np.ndarray, g1: np.ndarray, g2: np.ndarray, tol: float = 1e-13, max_iter: int = 100_000
+) -> np.ndarray:
     """Remove both sets of group means by alternating projections (exact for unbalanced panels at convergence)."""
     out = np.asarray(v, float).copy()
     s1, s2 = pd.Series(g1), pd.Series(g2)
@@ -185,8 +190,9 @@ def twoway_fe_cluster(y, x, g1, g2, return_demeaned: bool = False):
     beta = float(xd @ yd) / sxx
     xu = xd * (yd - beta * xd)
     inter = pd.factorize(pd.MultiIndex.from_arrays([g1, g2]))[0]
-    var = (_cluster_var(xu, g1, sxx, xd.size) + _cluster_var(xu, g2, sxx, xd.size)
-           - _cluster_var(xu, inter, sxx, xd.size))
+    var = (
+        _cluster_var(xu, g1, sxx, xd.size) + _cluster_var(xu, g2, sxx, xd.size) - _cluster_var(xu, inter, sxx, xd.size)
+    )
     se = math.sqrt(var) if var > 0 else float("nan")
     return (beta, se, xd, yd) if return_demeaned else (beta, se)
 

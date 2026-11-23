@@ -29,7 +29,7 @@ classifiers = [
 ]
 dependencies = [
     "numpy>=1.24",
-    "pandas>=2.0",
+    "pandas>=2.1",
     "pyarrow>=14",
     "polars>=1.0",
     "scipy>=1.10",
@@ -45,6 +45,7 @@ dev = [
     "pytest-cov>=5",
     "hypothesis>=6.100",
     "statsmodels>=0.14",
+    "arch>=7.0",
     "ruff>=0.6",
     "mypy>=1.10",
     "pandas-stubs>=2.0",
@@ -73,7 +74,7 @@ markers = ["network: needs internet access to the public data sources (opt-in: -
 filterwarnings = ["error::FutureWarning", "ignore::DeprecationWarning:dateutil.*", "ignore:Sortedness of columns cannot be checked:UserWarning"]
 
 [tool.ruff]
-line-length = 110
+line-length = 120
 target-version = "py310"
 src = ["src", "tests"]
 

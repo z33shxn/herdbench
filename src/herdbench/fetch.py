@@ -31,17 +31,35 @@ def months_between(start: date, end: date) -> list[str]:
     return out
 
 
+def write_listing(path: Path, revision: str, files) -> str:
+    """The mirror's file list at the pinned revision, in a canonical form (sorted, no timestamp), so its hash
+    recorded in results/manifest.json is the same for everyone who lists the same revision."""
+    payload = {
+        "repo": hfmirror.MIRROR_REPO,
+        "revision": revision,
+        "files": sorted(({"path": f.path, "sha256": f.sha256, "size": f.size} for f in files), key=lambda f: f["path"]),
+    }
+    text = json.dumps(payload, indent=1, sort_keys=True) + "\n"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(text)
+    return text
+
+
 def fetch_mirror(data: Path, workers: int = 2) -> tuple[int, int]:
     m = hfmirror.Mirror(revision=PREREG.mirror_revision)
     files = m.list_files()
     root = Path(data) / "hf"
+    write_listing(root / "listing.json", PREREG.mirror_revision, files)
     snaps = hfmirror.fetch_snapshots(m, root, files, workers=workers)
     fills = hfmirror.fetch_fills_slim(m, root, files, workers=workers)
     return len(snaps), len(fills)
 
 
 def fetch_funding(data: Path, start: date, end: date) -> int:
-    src = ironflow.Ironflow("hyperliquid-funding", revision=ironflow.FUNDING_REVISION, cache_dir=Path(data) / "ironflow")
+    src = ironflow.Ironflow(
+        "hyperliquid-funding", revision=ironflow.FUNDING_REVISION, cache_dir=Path(data) / "ironflow"
+    )
     months = months_between(start, end)
     for ym in months:
         src.month(ym)
@@ -81,8 +99,10 @@ def fetch_finra(data: Path, start: date, end: date) -> list[date]:
     return found
 
 
-EXTRA_COT = {"cme:BTC": cftc.BridgeSpec("133741", "tff", "Bitcoin, CME"),
-             "cme:ETH": cftc.BridgeSpec("146021", "tff", "Ether cash-settled, CME")}
+EXTRA_COT = {
+    "cme:BTC": cftc.BridgeSpec("133741", "tff", "Bitcoin, CME"),
+    "cme:ETH": cftc.BridgeSpec("146021", "tff", "Ether cash-settled, CME"),
+}
 
 
 def fetch_cftc(data: Path, start: date, end: date) -> int:
@@ -96,6 +116,8 @@ def fetch_cftc(data: Path, start: date, end: date) -> int:
             n += 1
             continue
         df: pd.DataFrame = cot.positions(spec, start.isoformat(), end.isoformat())
-        df.assign(market=name, code=spec.code, report=spec.report).to_parquet(out, index=False)
+        tmp = out.with_name(out.name + ".part")
+        df.assign(market=name, code=spec.code, report=spec.report).to_parquet(tmp, index=False)
+        tmp.replace(out)
         n += 1
     return n

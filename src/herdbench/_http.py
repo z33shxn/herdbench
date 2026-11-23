@@ -24,9 +24,16 @@ class HttpClient:
     ``min_interval`` spaces consecutive requests to stay inside public rate limits.
     """
 
-    def __init__(self, user_agent: str = USER_AGENT, timeout: float = 60.0, retries: int = 6,
-                 backoff: float = 2.0, max_backoff: float = 60.0, min_interval: float = 0.0,
-                 session: requests.Session | None = None):
+    def __init__(
+        self,
+        user_agent: str = USER_AGENT,
+        timeout: float = 60.0,
+        retries: int = 6,
+        backoff: float = 2.0,
+        max_backoff: float = 60.0,
+        min_interval: float = 0.0,
+        session: requests.Session | None = None,
+    ):
         self.timeout = timeout
         self.retries = retries
         self.backoff = backoff
@@ -55,7 +62,7 @@ class HttpClient:
                     return
                 except ValueError:
                     pass
-        delay = min(self.max_backoff, self.backoff * (2 ** attempt))
+        delay = min(self.max_backoff, self.backoff * (2**attempt))
         if delay > 0:
             time.sleep(delay)
 

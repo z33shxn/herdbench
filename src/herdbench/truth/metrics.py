@@ -35,40 +35,50 @@ def entity_positions(pos: pl.DataFrame, fragile_distance: float = PREREG.fragile
     """Net each entity's address-level positions per market. Needs market, entity, size, notional,
     liquidation_price and mark (plus ``date`` if present). Entities with no net position are dropped."""
     keys = [k for k in ("date", "market", "entity") if k in pos.columns]
-    p = (pos.filter(pl.col("size") != 0)
-         .with_columns(
-             sign=pl.when(pl.col("size") > 0).then(1.0).otherwise(-1.0),
-             fragile=(((pl.col("mark") - pl.col("liquidation_price")).abs() / pl.col("mark")) <= fragile_distance)
-             .fill_null(False)))
+    p = pos.filter(pl.col("size") != 0).with_columns(
+        sign=pl.when(pl.col("size") > 0).then(1.0).otherwise(-1.0),
+        fragile=(((pl.col("mark") - pl.col("liquidation_price")).abs() / pl.col("mark")) <= fragile_distance).fill_null(
+            False
+        ),
+    )
     g = p.group_by(keys).agg(
         signed=(pl.col("sign") * pl.col("notional")).sum(),
         gross_addr=pl.col("notional").sum(),
         fragile_ntl=pl.col("notional").filter(pl.col("fragile")).sum(),
-        n_addr=pl.len().cast(pl.Int64))
-    return (g.filter(pl.col("signed").abs() > 1e-9 * pl.col("gross_addr"))
-            .with_columns(notional=pl.col("signed").abs(), is_long=pl.col("signed") > 0)
-            .drop("signed").sort(keys))
+        n_addr=pl.len().cast(pl.Int64),
+    )
+    return (
+        g.filter(pl.col("signed").abs() > 1e-9 * pl.col("gross_addr"))
+        .with_columns(notional=pl.col("signed").abs(), is_long=pl.col("signed") > 0)
+        .drop("signed")
+        .sort(keys)
+    )
 
 
 def coheld_flags(rows: pl.DataFrame, eligible: Iterable[str], min_other: int = 5) -> pl.DataFrame:
     """Flag holdings whose entity holds the same direction in at least ``min_other`` other eligible markets."""
     elig = sorted(set(eligible))
     r = rows.with_columns(_elig=pl.col("market").is_in(elig))
-    counts = r.filter(pl.col("_elig")).group_by("entity").agg(
-        _nl=pl.col("is_long").sum().cast(pl.Int64), _ns=(~pl.col("is_long")).sum().cast(pl.Int64))
+    counts = (
+        r.filter(pl.col("_elig"))
+        .group_by("entity")
+        .agg(_nl=pl.col("is_long").sum().cast(pl.Int64), _ns=(~pl.col("is_long")).sum().cast(pl.Int64))
+    )
     r = r.join(counts, on="entity", how="left").with_columns(pl.col("_nl").fill_null(0), pl.col("_ns").fill_null(0))
     same = pl.when(pl.col("is_long")).then(pl.col("_nl")).otherwise(pl.col("_ns")) - pl.col("_elig").cast(pl.Int64)
     return r.with_columns(coheld=same >= min_other).drop(["_elig", "_nl", "_ns"])
 
 
-def cell_metrics(rows: pl.DataFrame, keys: Sequence[str] = KEYS,
-                 top_share: float = PREREG.top_share_fraction) -> pl.DataFrame:
+def cell_metrics(
+    rows: pl.DataFrame, keys: Sequence[str] = KEYS, top_share: float = PREREG.top_share_fraction
+) -> pl.DataFrame:
     """One row per cell from entity holdings: keys + entity, notional, is_long, w, gross_addr, fragile_ntl, coheld."""
     keys = list(keys)
-    r = (rows.sort([*keys, "entity"])
-         .with_columns(rank=pl.col("notional").rank(method="ordinal", descending=True).over(keys),
-                       n=pl.len().over(keys))
-         .with_columns(k=ceil_count(pl.col("n"), top_share)))
+    r = (
+        rows.sort([*keys, "entity"])
+        .with_columns(rank=pl.col("notional").rank(method="ordinal", descending=True).over(keys), n=pl.len().over(keys))
+        .with_columns(k=ceil_count(pl.col("n"), top_share))
+    )
     sign = pl.when(pl.col("is_long")).then(1.0).otherwise(-1.0)
     agg = r.group_by(keys).agg(
         n_entities=pl.len().cast(pl.Int64),
@@ -81,18 +91,25 @@ def cell_metrics(rows: pl.DataFrame, keys: Sequence[str] = KEYS,
         top2=pl.col("notional").filter(pl.col("rank") <= 2).sum(),
         fragile=pl.col("fragile_ntl").sum(),
         gross_addr=pl.col("gross_addr").sum(),
-        coheld_ntl=pl.col("notional").filter(pl.col("coheld")).sum())
+        coheld_ntl=pl.col("notional").filter(pl.col("coheld")).sum(),
+    )
     n = pl.col("n_entities").cast(pl.Float64)
-    out = (agg.with_columns(gross_notional=pl.col("long_ntl") + pl.col("short_ntl"),
-                            net_notional=pl.col("long_ntl") - pl.col("short_ntl"))
-           .with_columns(
-               ni=pl.col("net_notional") / pl.col("gross_notional"),
-               ai=(2.0 * pl.col("n_long") - n) / n,
-               lwi=pl.when(pl.col("lev_den") > 0).then(pl.col("lev_num") / pl.col("lev_den")).otherwise(None),
-               top10_share=pl.col("top_k") / pl.col("gross_notional"),
-               top2_share=pl.col("top2") / pl.col("gross_notional"),
-               fragile_share=pl.when(pl.col("gross_addr") > 0).then(pl.col("fragile") / pl.col("gross_addr"))
-               .otherwise(None),
-               coheld_share=pl.col("coheld_ntl") / pl.col("gross_notional"))
-           .with_columns(abs_ni=pl.col("ni").abs()))
+    out = (
+        agg.with_columns(
+            gross_notional=pl.col("long_ntl") + pl.col("short_ntl"),
+            net_notional=pl.col("long_ntl") - pl.col("short_ntl"),
+        )
+        .with_columns(
+            ni=pl.col("net_notional") / pl.col("gross_notional"),
+            ai=(2.0 * pl.col("n_long") - n) / n,
+            lwi=pl.when(pl.col("lev_den") > 0).then(pl.col("lev_num") / pl.col("lev_den")).otherwise(None),
+            top10_share=pl.col("top_k") / pl.col("gross_notional"),
+            top2_share=pl.col("top2") / pl.col("gross_notional"),
+            fragile_share=pl.when(pl.col("gross_addr") > 0)
+            .then(pl.col("fragile") / pl.col("gross_addr"))
+            .otherwise(None),
+            coheld_share=pl.col("coheld_ntl") / pl.col("gross_notional"),
+        )
+        .with_columns(abs_ni=pl.col("ni").abs())
+    )
     return out.select([*keys, "n_entities", "gross_notional", "net_notional", *METRICS, "top2_share"]).sort(keys)

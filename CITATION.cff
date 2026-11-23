@@ -1,0 +1,36 @@
+cff-version: 1.2.0
+message: "If you use HerdBench, please cite it using the metadata in this file."
+type: software
+title: "HerdBench: grading public crowding signals against observed positions"
+abstract: >-
+  HerdBench tests whether public crowding and positioning signals (funding,
+  premium, open interest, momentum, comovement, liquidations, Binance
+  long/short ratios and equity short interest) track how traders are actually
+  positioned. The truth comes from daily snapshots of every open position on
+  Hyperliquid, a derivatives venue where all positions are public. Sub-accounts
+  are merged into their master account, market makers and protocol accounts are
+  removed, and net positioning and crowding metrics are computed for each
+  snapshot date, market and cohort. Every parameter was pre-registered and
+  timestamped before any signal was compared with the truth. The package
+  contains the truth pipeline, the proxies, the grading statistics and integrity
+  gates, a command-line interface, and a function that grades any signal
+  against the published, disclosure-controlled truth panel.
+authors:
+  - family-names: Zeeshan
+    given-names: Mohammed
+version: "1.0.0"
+date-released: "2026-11-19"
+license: Apache-2.0
+repository-code: "https://github.com/z33shxn/herdbench"
+keywords:
+  - crowding
+  - positioning
+  - market microstructure
+  - Hyperliquid
+  - perpetual futures
+  - funding rates
+  - open interest
+  - short interest
+  - pre-registration
+  - quantitative finance
+  - benchmark

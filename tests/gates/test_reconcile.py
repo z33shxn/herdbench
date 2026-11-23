@@ -10,15 +10,23 @@ T1 = datetime(2026, 3, 2, 0, 6, tzinfo=timezone.utc)
 
 
 def snap(rows):
-    return pl.DataFrame({"user": [r[0] for r in rows], "market": [r[1] for r in rows],
-                         "size": [float(r[2]) for r in rows]})
+    return pl.DataFrame(
+        {"user": [r[0] for r in rows], "market": [r[1] for r in rows], "size": [float(r[2]) for r in rows]}
+    )
 
 
 def fills(rows):
     """rows: (address, coin, side, size, timestamp)."""
-    return pl.DataFrame({"address": [r[0] for r in rows], "coin": [r[1] for r in rows],
-                         "asset_class": ["perp"] * len(rows), "side": [r[2] for r in rows],
-                         "size": [float(r[3]) for r in rows], "timestamp": [r[4] for r in rows]})
+    return pl.DataFrame(
+        {
+            "address": [r[0] for r in rows],
+            "coin": [r[1] for r in rows],
+            "asset_class": ["perp"] * len(rows),
+            "side": [r[2] for r in rows],
+            "size": [float(r[3]) for r in rows],
+            "timestamp": [r[4] for r in rows],
+        }
+    )
 
 
 MID = datetime(2026, 3, 1, 12, tzinfo=timezone.utc)
@@ -69,7 +77,14 @@ def test_shares_are_reported_separately_for_a_given_group():
 
 
 def test_maker_taker_balance_per_market():
-    f = pl.DataFrame({"coin": ["BTC", "BTC", "ETH", "ETH"], "asset_class": ["perp"] * 4, "crossed": [True, False, True, False],
-                      "price": [100.0, 100.0, 10.0, 10.0], "size": [1.0, 1.0, 2.0, 1.0]})
+    f = pl.DataFrame(
+        {
+            "coin": ["BTC", "BTC", "ETH", "ETH"],
+            "asset_class": ["perp"] * 4,
+            "crossed": [True, False, True, False],
+            "price": [100.0, 100.0, 10.0, 10.0],
+            "size": [1.0, 1.0, 2.0, 1.0],
+        }
+    )
     out = reconcile.maker_taker_balance(f).sort("market")
     assert out["gap"].to_list() == pytest.approx([0.0, (20 - 10) / 20])

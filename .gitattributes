@@ -1,0 +1,6 @@
+# Text files are stored and checked out with LF line ends on every platform, so the published hashes
+# (pre-registration, addendum, results manifest) verify on Windows, macOS and Linux alike.
+* text=auto eol=lf
+*.parquet binary
+*.ots binary
+*.png binary

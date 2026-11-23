@@ -28,6 +28,11 @@ def test_tff_rows_give_leveraged_funds_net_share():
     assert first["net_share"] == pytest.approx((128725 - 544629) / 1945513)
 
 
+def test_tff_rows_also_give_asset_manager_net_share():
+    df = cftc.parse_tff(json.loads((FIXTURES / "cftc_tff_es.json").read_text()))
+    assert df.iloc[0]["asset_net_share"] == pytest.approx((1174764 - 213425) / 1945513)
+
+
 def test_bridge_table_covers_metals_energy_indices_and_currencies():
     codes = {m: spec.code for m, spec in cftc.BRIDGE.items()}
     assert codes["xyz:GOLD"] == "088691"

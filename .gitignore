@@ -16,8 +16,12 @@ venv/
 coverage.xml
 htmlcov/
 
-# Local data: raw downloads and intermediate tables are never published
-data/
+# Local data: raw downloads and intermediate tables are never published (root folder only; the
+# package's own src/herdbench/data/ holds the published panel and is tracked)
+/data/
+/derived/
+# The two published Parquet files are tracked once, in src/herdbench/data/ (byte-identical, test-enforced)
+/results/*.parquet
 *.part
 *.tmp
 

@@ -28,13 +28,15 @@ def test_fisher_mean_averages_on_the_z_scale():
 def panel(T, M, rho, ar=0.0, seed=0):
     """Wide date x market frames whose within-market correlation is rho."""
     rng = np.random.default_rng(seed)
+
     def ar1(shape):
         z = rng.normal(size=shape)
         for t in range(1, shape[0]):
-            z[t] = ar * z[t - 1] + math.sqrt(1 - ar ** 2) * z[t]
+            z[t] = ar * z[t - 1] + math.sqrt(1 - ar**2) * z[t]
         return z
+
     x = ar1((T, M))
-    y = rho * x + math.sqrt(1 - rho ** 2) * ar1((T, M))
+    y = rho * x + math.sqrt(1 - rho**2) * ar1((T, M))
     idx = pd.date_range("2025-08-28", periods=T, freq="D")
     cols = [f"m{i}" for i in range(M)]
     return pd.DataFrame(x, idx, cols), pd.DataFrame(y, idx, cols)
@@ -52,8 +54,8 @@ def test_time_series_statistic_recovers_a_planted_ranking():
 
 def test_time_series_statistic_skips_markets_with_too_few_days_or_no_variation():
     p, t = panel(100, 3, 0.6, seed=4)
-    p.iloc[50:, 1] = np.nan          # market m1 keeps only 50 days
-    p.iloc[:, 2] = 1.0               # market m2 never varies
+    p.iloc[50:, 1] = np.nan  # market m1 keeps only 50 days
+    p.iloc[:, 2] = 1.0  # market m2 never varies
     res = stats.ts_statistic(p, t, min_days=60)
     assert res.n_markets == 1
     assert list(res.per_market.dropna().index) == ["m0"]

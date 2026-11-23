@@ -39,11 +39,11 @@ def politis_white_block(x: np.ndarray) -> float:
     acorr = np.zeros(m_max + 1)
     first: int | None = None
     for lag in range(m_max + 1):
-        cross = float(e[lag:] @ e[:n - lag])
+        cross = float(e[lag:] @ e[: n - lag])
         acov[lag] = cross / n
-        tail, head = e[lag + 1:], e[:-(lag + 1)]
+        tail, head = e[lag + 1 :], e[: -(lag + 1)]
         acorr[lag] = abs(cross) / math.sqrt(float(tail @ tail) * float(head @ head))
-        if lag >= kn and first is None and np.all(acorr[lag - kn:lag] < band):
+        if lag >= kn and first is None and np.all(acorr[lag - kn : lag] < band):
             first = lag - kn
     m = min(2 * max(first, 1), m_max) if first is not None else m_max
     g = 0.0
@@ -98,8 +98,9 @@ class JointResult:
     per_market: dict[str, pd.Series] = field(repr=False)
 
 
-def joint_ts(proxies: dict[str, pd.DataFrame], truth: pd.DataFrame, min_days: int, reps: int, block: int,
-             seed: int) -> JointResult:
+def joint_ts(
+    proxies: dict[str, pd.DataFrame], truth: pd.DataFrame, min_days: int, reps: int, block: int, seed: int
+) -> JointResult:
     idx, cols = _master(proxies, truth)
     rows = block_indices(len(idx), block, reps, seed) if reps else None
     out = JointResult({}, {}, {}, {}, {}, {})
@@ -121,10 +122,10 @@ def joint_ts(proxies: dict[str, pd.DataFrame], truth: pd.DataFrame, min_days: in
     return out
 
 
-def rotation_null(proxy: pd.DataFrame, truth: pd.DataFrame, min_days: int, draws: int, min_shift: int,
-                  seed: int) -> np.ndarray:
+def rotation_null(
+    proxy: pd.DataFrame, truth: pd.DataFrame, min_days: int, draws: int, min_shift: int, seed: int
+) -> np.ndarray:
     idx, cols = _master({"p": proxy}, truth)
-    x, y = _arrays(proxy, truth, idx, cols)
     x_raw = proxy.reindex(index=idx, columns=cols.intersection(proxy.columns)).to_numpy(dtype=float)
     y_raw = truth.reindex(index=idx, columns=cols.intersection(proxy.columns)).to_numpy(dtype=float)
     T = len(idx)
@@ -139,8 +140,16 @@ def rotation_null(proxy: pd.DataFrame, truth: pd.DataFrame, min_days: int, draws
     return out
 
 
-def verdict(z: float, p_holm: float, rot95: float, fe_beta: float, ci90: tuple[float, float], expected_sign: int,
-            alpha: float, bound: float) -> str:
+def verdict(
+    z: float,
+    p_holm: float,
+    rot95: float,
+    fe_beta: float,
+    ci90: tuple[float, float],
+    expected_sign: int,
+    alpha: float,
+    bound: float,
+) -> str:
     """confirmed / reversed / uninformative / inconclusive (see the pre-registration, section 7)."""
     if not any(math.isnan(v) for v in (z, p_holm, rot95, fe_beta)):
         strong = p_holm < alpha and abs(z) > rot95 and np.sign(fe_beta) == np.sign(z) and z != 0
@@ -161,8 +170,15 @@ def rank_table(draws: dict[str, np.ndarray], z: dict[str, float]) -> pd.DataFram
     ranks = (-mat).argsort(axis=1).argsort(axis=1) + 1
     lo = np.percentile(ranks, 2.5, axis=0)
     hi = np.percentile(ranks, 97.5, axis=0)
-    table = pd.DataFrame({"z": [z[n] for n in names], "abs_z": [abs(z[n]) for n in names],
-                          "rank_lo": np.floor(lo).astype(int), "rank_hi": np.ceil(hi).astype(int)}, index=names)
+    table = pd.DataFrame(
+        {
+            "z": [z[n] for n in names],
+            "abs_z": [abs(z[n]) for n in names],
+            "rank_lo": np.floor(lo).astype(int),
+            "rank_hi": np.ceil(hi).astype(int),
+        },
+        index=names,
+    )
     table["rank"] = [order.index(n) + 1 for n in names]
     return table.sort_values("rank")
 
@@ -171,8 +187,13 @@ def outranks(draws: dict[str, np.ndarray], a: str, b: str) -> float:
     return float(np.mean(np.abs(draws[a]) > np.abs(draws[b])))
 
 
-def stability(halves: dict[str, tuple[float, float]], ses: dict[str, tuple[float, float]], verdicts: dict[str, str],
-              tau_threshold: float, min_verdicts: int) -> dict:
+def stability(
+    halves: dict[str, tuple[float, float]],
+    ses: dict[str, tuple[float, float]],
+    verdicts: dict[str, str],
+    tau_threshold: float,
+    min_verdicts: int,
+) -> dict:
     decisive = [n for n, v in verdicts.items() if v in ("confirmed", "reversed") and n in halves]
     unstable = []
     for n in decisive:
@@ -186,8 +207,13 @@ def stability(halves: dict[str, tuple[float, float]], ses: dict[str, tuple[float
         second = [halves[n][1] for n in decisive]
         tau = float(sps.kendalltau(first, second).statistic)
     claimed = len(decisive) >= min_verdicts and not math.isnan(tau) and tau >= tau_threshold
-    return {"decisive": decisive, "tau": tau, "ranking_claimed": bool(claimed), "unstable": unstable,
-            "passed": None if len(decisive) < min_verdicts else bool(tau >= tau_threshold)}
+    return {
+        "decisive": decisive,
+        "tau": tau,
+        "ranking_claimed": bool(claimed),
+        "unstable": unstable,
+        "passed": None if len(decisive) < min_verdicts else bool(tau >= tau_threshold),
+    }
 
 
 def tail_lift(proxy: pd.DataFrame, truth: pd.DataFrame, proxy_tail: float, truth_tail: float) -> float:

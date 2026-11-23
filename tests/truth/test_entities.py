@@ -18,8 +18,10 @@ def handler(body):
         return 200, {"role": "user"}
     if body["type"] == "subAccounts":
         if body["user"] == M:
-            return 200, [{"name": "sub01", "subAccountUser": SUB1, "master": M, "clearinghouseState": {}, "spotState": {}},
-                         {"name": "sub02", "subAccountUser": SUB2, "master": M, "clearinghouseState": {}, "spotState": {}}]
+            return 200, [
+                {"name": "sub01", "subAccountUser": SUB1, "master": M, "clearinghouseState": {}, "spotState": {}},
+                {"name": "sub02", "subAccountUser": SUB2, "master": M, "clearinghouseState": {}, "spotState": {}},
+            ]
         return 200, None
     raise AssertionError(body)
 
@@ -66,5 +68,6 @@ def test_fetch_roles_resumes_without_querying_finished_addresses(tmp_path):
 def test_map_hash_is_stable_and_order_independent():
     a = entities.map_hash({SUB1: M, SUB2: M})
     b = entities.map_hash({SUB2: M, SUB1: M})
-    assert a == b and len(a) == 64
+    assert a == b
+    assert len(a) == 64
     assert entities.map_hash({SUB1: M}) != a

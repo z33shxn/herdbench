@@ -91,7 +91,7 @@ def _handler(routes: Routes, base: list[str]):
                     start = int(m.group(1))
                     end = int(m.group(2)) if m.group(2) else len(data) - 1
                     end = min(end, len(data) - 1)
-                    chunk = data[start:end + 1]
+                    chunk = data[start : end + 1]
                     self.send_response(206)
                     self.send_header("Content-Range", f"bytes {start}-{end}/{len(data)}")
                 else:

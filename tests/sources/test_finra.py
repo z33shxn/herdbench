@@ -24,14 +24,20 @@ def test_parse_short_interest_reads_the_pipe_file():
 
 def test_short_interest_url_uses_the_settlement_date():
     assert finra.short_interest_url(date(2026, 1, 30)) == (
-        "https://cdn.finra.org/equity/otcmarket/biweekly/shrt20260130.csv")
+        "https://cdn.finra.org/equity/otcmarket/biweekly/shrt20260130.csv"
+    )
 
 
 def test_discover_settlement_dates_returns_only_published_files():
-    routes = Routes(head_ok={"/equity/otcmarket/biweekly/shrt20260115.csv",
-                             "/equity/otcmarket/biweekly/shrt20260130.csv",
-                             "/equity/otcmarket/biweekly/shrt20260213.csv"})
+    routes = Routes(
+        head_ok={
+            "/equity/otcmarket/biweekly/shrt20260115.csv",
+            "/equity/otcmarket/biweekly/shrt20260130.csv",
+            "/equity/otcmarket/biweekly/shrt20260213.csv",
+        }
+    )
     with serve(routes) as base:
-        found = finra.discover_settlement_dates(date(2026, 1, 1), date(2026, 1, 31), base=base,
-                                                http=HttpClient(retries=2, backoff=0.0))
+        found = finra.discover_settlement_dates(
+            date(2026, 1, 1), date(2026, 1, 31), base=base, http=HttpClient(retries=2, backoff=0.0)
+        )
     assert found == [date(2026, 1, 15), date(2026, 1, 30)]

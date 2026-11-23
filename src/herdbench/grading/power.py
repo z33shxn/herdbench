@@ -35,7 +35,7 @@ def clustered_power(mask: np.ndarray, rho: float, ar: float, reps: int, seed: in
     stock_idx, per_idx = np.nonzero(mask)
     _, g1 = np.unique(stock_idx, return_inverse=True)
     _, g2 = np.unique(per_idx, return_inverse=True)
-    G = int(g1.max()) + 1
+    G = int(np.unique(g1).size)
     crit = sps.t.ppf(1 - alpha / 2, G - 1)
     rng = np.random.default_rng(seed)
 
@@ -56,6 +56,6 @@ def clustered_power(mask: np.ndarray, rho: float, ar: float, reps: int, seed: in
         beta = float(xd @ yd) / sxx
         score = np.bincount(g1, xd * (yd - beta * xd))
         nobs = xd.size
-        var = float(score @ score) / sxx ** 2 * (G / (G - 1)) * ((nobs - 1) / (nobs - 1))
+        var = float(score @ score) / sxx**2 * (G / (G - 1)) * ((nobs - 1) / (nobs - 1))
         hits += abs(beta / math.sqrt(var)) > crit
     return hits / reps

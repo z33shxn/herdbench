@@ -17,7 +17,7 @@ from herdbench._http import HttpClient, HttpError
 BASE = "https://api.coinalyze.net/v1/"
 
 
-class MissingKey(RuntimeError):
+class MissingKeyError(RuntimeError):
     pass
 
 
@@ -29,7 +29,7 @@ class Coinalyze:
     def __init__(self, key: str | None = None, base: str = BASE, http: HttpClient | None = None):
         key = key or os.environ.get("COINALYZE_API_KEY")
         if not key:
-            raise MissingKey("set COINALYZE_API_KEY to use Coinalyze cross-checks (free key at coinalyze.net)")
+            raise MissingKeyError("set COINALYZE_API_KEY to use Coinalyze cross-checks (free key at coinalyze.net)")
         self._key = key
         self.base = base if base.endswith("/") else base + "/"
         self.http = http or HttpClient(min_interval=1.6)  # free tier: 40 calls per minute
@@ -38,8 +38,9 @@ class Coinalyze:
         return f"Coinalyze(base={self.base!r})"
 
     def history(self, endpoint: str, symbols: str, interval: str, start: int, end: int, **params) -> pd.DataFrame:
-        query = urlencode({"symbols": symbols, "interval": interval, "from": start, "to": end,
-                           **params, "api_key": self._key})
+        query = urlencode(
+            {"symbols": symbols, "interval": interval, "from": start, "to": end, **params, "api_key": self._key}
+        )
         try:
             r = self.http.get(f"{self.base}{endpoint}?{query}")
         except HttpError:

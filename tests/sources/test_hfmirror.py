@@ -56,7 +56,7 @@ def test_sparse_file_serves_prefetched_bytes_and_fetches_a_gap_once():
 
     def fetch(start, end):
         calls.append((start, end))
-        return data[start:end + 1]
+        return data[start : end + 1]
 
     sf = SparseFile(len(data), fetch)
     sf.add(100, data[100:200])
@@ -74,13 +74,15 @@ def test_sparse_file_serves_prefetched_bytes_and_fetches_a_gap_once():
 
 def _parquet_bytes(tmp_path: Path) -> bytes:
     n = 30_000
-    table = pa.table({
-        "coin": pa.array(["BTC", "ETH", "xyz:NVDA"] * (n // 3)),
-        "price": pa.array([float(i) for i in range(n)]),
-        "tx_hash": pa.array([hashlib.sha256(str(i).encode()).hexdigest() for i in range(n)]),
-        "address": pa.array([f"0x{i % 997:040x}" for i in range(n)]),
-        "crossed": pa.array([i % 2 == 0 for i in range(n)]),
-    })
+    table = pa.table(
+        {
+            "coin": pa.array(["BTC", "ETH", "xyz:NVDA"] * (n // 3)),
+            "price": pa.array([float(i) for i in range(n)]),
+            "tx_hash": pa.array([hashlib.sha256(str(i).encode()).hexdigest() for i in range(n)]),
+            "address": pa.array([f"0x{i % 997:040x}" for i in range(n)]),
+            "crossed": pa.array([i % 2 == 0 for i in range(n)]),
+        }
+    )
     path = tmp_path / "f.parquet"
     pq.write_table(table, path, row_group_size=10_000, compression="snappy")
     return path.read_bytes()
@@ -92,7 +94,7 @@ def test_read_parquet_columns_equals_full_read_and_skips_other_columns(tmp_path)
 
     def fetch(start, end):
         fetched.append(end - start + 1)
-        return raw[start:end + 1]
+        return raw[start : end + 1]
 
     table, info = hfmirror.read_parquet_columns(fetch, len(raw), ["coin", "crossed"], max_gap=0)
     expected = pq.read_table(tmp_path / "f.parquet", columns=["coin", "crossed"])
@@ -105,15 +107,20 @@ def test_read_parquet_columns_equals_full_read_and_skips_other_columns(tmp_path)
 def test_read_parquet_columns_rejects_a_missing_column(tmp_path):
     raw = _parquet_bytes(tmp_path)
     with pytest.raises(MirrorError, match="start_position"):
-        hfmirror.read_parquet_columns(lambda s, e: raw[s:e + 1], len(raw), ["coin", "start_position"])
+        hfmirror.read_parquet_columns(lambda s, e: raw[s : e + 1], len(raw), ["coin", "start_position"])
 
 
 def test_download_checks_sha256_and_never_leaves_a_bad_file(tmp_path):
     payload = b"snapshot-bytes" * 1000
     good = hashlib.sha256(payload).hexdigest()
-    routes = Routes(files={"/files/perp_archive/date=2026-01-01/1_2.parquet": payload},
-                    redirects={f"/datasets/r/resolve/{REV}/perp_archive/date=2026-01-01/1_2.parquet":
-                               "/files/perp_archive/date=2026-01-01/1_2.parquet"})
+    routes = Routes(
+        files={"/files/perp_archive/date=2026-01-01/1_2.parquet": payload},
+        redirects={
+            f"/datasets/r/resolve/{REV}/perp_archive/date=2026-01-01/1_2.parquet": (
+                "/files/perp_archive/date=2026-01-01/1_2.parquet"
+            )
+        },
+    )
     with serve(routes) as base:
         m = Mirror(revision=REV, repo="r", hub=base, http=fast_http())
         dest = tmp_path / "out.parquet"
@@ -128,8 +135,9 @@ def test_download_checks_sha256_and_never_leaves_a_bad_file(tmp_path):
 def test_download_resumes_a_partial_copy_with_a_range_request(tmp_path):
     payload = bytes(range(256)) * 400
     path = "perp_archive/date=2026-01-02/3_4.parquet"
-    routes = Routes(files={f"/files/{path}": payload},
-                    redirects={f"/datasets/r/resolve/{REV}/{path}": f"/files/{path}"})
+    routes = Routes(
+        files={f"/files/{path}": payload}, redirects={f"/datasets/r/resolve/{REV}/{path}": f"/files/{path}"}
+    )
     dest = tmp_path / "snap.parquet"
     part = dest.with_suffix(".parquet.part")
     part.write_bytes(payload[:40_000])
@@ -142,11 +150,25 @@ def test_download_resumes_a_partial_copy_with_a_range_request(tmp_path):
 
 
 def test_list_files_follows_link_pagination():
-    page1 = [{"type": "file", "path": "fills_raw_2025-07-28.parquet", "size": 10, "oid": "a",
-              "lfs": {"oid": "1" * 64, "size": 10, "pointerSize": 133}}]
-    page2 = [{"type": "file", "path": "fills_raw_2025-07-29.parquet", "size": 11, "oid": "b",
-              "lfs": {"oid": "2" * 64, "size": 11, "pointerSize": 133}},
-             {"type": "directory", "path": "fills", "size": 0, "oid": "c"}]
+    page1 = [
+        {
+            "type": "file",
+            "path": "fills_raw_2025-07-28.parquet",
+            "size": 10,
+            "oid": "a",
+            "lfs": {"oid": "1" * 64, "size": 10, "pointerSize": 133},
+        }
+    ]
+    page2 = [
+        {
+            "type": "file",
+            "path": "fills_raw_2025-07-29.parquet",
+            "size": 11,
+            "oid": "b",
+            "lfs": {"oid": "2" * 64, "size": 11, "pointerSize": 133},
+        },
+        {"type": "directory", "path": "fills", "size": 0, "oid": "c"},
+    ]
     first = f"/api/datasets/r/tree/{REV}?recursive=true&limit=1000"
     routes = Routes(json_pages={first: (page1, "/page2"), "/page2": (page2, None)})
     with serve(routes) as base:
@@ -158,9 +180,11 @@ def test_list_files_follows_link_pagination():
 def test_read_range_retries_through_a_temporary_503():
     payload = b"0123456789" * 100
     path = "fills_raw_2025-08-01.parquet"
-    routes = Routes(files={f"/files/{path}": payload},
-                    redirects={f"/datasets/r/resolve/{REV}/{path}": f"/files/{path}"},
-                    fail_first={f"/files/{path}": (1, 503)})
+    routes = Routes(
+        files={f"/files/{path}": payload},
+        redirects={f"/datasets/r/resolve/{REV}/{path}": f"/files/{path}"},
+        fail_first={f"/files/{path}": (1, 503)},
+    )
     with serve(routes) as base:
         m = Mirror(revision=REV, repo="r", hub=base, http=fast_http())
         assert m.read_range(path, 10, 19) == payload[10:20]
@@ -169,7 +193,7 @@ def test_read_range_retries_through_a_temporary_503():
 def _fills_file(tmp_path: Path) -> bytes:
     n = 1_000
     cols = {name: pa.array([f"{name}{i % 7}" for i in range(n)]) for name in hfmirror.FILL_COLUMNS}
-    cols["price"] = pa.array([i for i in range(n)], type=pa.decimal128(20, 10))
+    cols["price"] = pa.array(list(range(n)), type=pa.decimal128(20, 10))
     cols["size"] = pa.array([1] * n, type=pa.decimal128(20, 10))
     cols["liquidation_mark_px"] = pa.array([None] * n, type=pa.decimal128(20, 10))
     cols["crossed"] = pa.array([i % 2 == 0 for i in range(n)])

@@ -24,8 +24,12 @@ from herdbench._http import HttpClient
 
 VISION = "https://data.binance.vision"
 METRIC_COLUMNS = (
-    "sum_open_interest", "sum_open_interest_value", "count_toptrader_long_short_ratio",
-    "sum_toptrader_long_short_ratio", "count_long_short_ratio", "sum_taker_long_short_vol_ratio",
+    "sum_open_interest",
+    "sum_open_interest_value",
+    "count_toptrader_long_short_ratio",
+    "sum_toptrader_long_short_ratio",
+    "count_long_short_ratio",
+    "sum_taker_long_short_vol_ratio",
 )
 
 
@@ -44,15 +48,29 @@ def klines_url(symbol: str, interval: str, year: int, month: int, base: str = VI
 def parse_klines(text: str) -> pd.DataFrame:
     """Kline rows (with or without a header line): times, volume, and taker buy and sell volume."""
     first = text.split("\n", 1)[0]
-    names = ["open_time", "open", "high", "low", "close", "volume", "close_time", "quote_volume", "count",
-             "taker_buy_volume", "taker_buy_quote_volume", "ignore"]
+    names = [
+        "open_time",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "close_time",
+        "quote_volume",
+        "count",
+        "taker_buy_volume",
+        "taker_buy_quote_volume",
+        "ignore",
+    ]
     df = pd.read_csv(io.StringIO(text), header=0 if first.startswith("open_time") else None, names=names)
-    out = pd.DataFrame({
-        "open_time": pd.to_datetime(df["open_time"].astype("int64"), unit="ms", utc=True),
-        "close_time": pd.to_datetime(df["close_time"].astype("int64"), unit="ms", utc=True),
-        "volume": df["volume"].astype(float),
-        "taker_buy_volume": df["taker_buy_volume"].astype(float),
-    })
+    out = pd.DataFrame(
+        {
+            "open_time": pd.to_datetime(df["open_time"].astype("int64"), unit="ms", utc=True),
+            "close_time": pd.to_datetime(df["close_time"].astype("int64"), unit="ms", utc=True),
+            "volume": df["volume"].astype(float),
+            "taker_buy_volume": df["taker_buy_volume"].astype(float),
+        }
+    )
     out["taker_sell_volume"] = out["volume"] - out["taker_buy_volume"]
     return out.sort_values("open_time").drop_duplicates("open_time").reset_index(drop=True)
 
@@ -74,11 +92,13 @@ def parse_metrics(text: str) -> pd.DataFrame:
 
 def parse_funding(text: str) -> pd.DataFrame:
     df = pd.read_csv(io.StringIO(text))
-    out = pd.DataFrame({
-        "time": pd.to_datetime(df["calc_time"].astype("int64"), unit="ms", utc=True),
-        "interval_hours": df["funding_interval_hours"].astype("int64"),
-        "funding": df["last_funding_rate"].astype(float),
-    })
+    out = pd.DataFrame(
+        {
+            "time": pd.to_datetime(df["calc_time"].astype("int64"), unit="ms", utc=True),
+            "interval_hours": df["funding_interval_hours"].astype("int64"),
+            "funding": df["last_funding_rate"].astype(float),
+        }
+    )
     return out.sort_values("time").reset_index(drop=True)
 
 
@@ -103,7 +123,9 @@ class Vision:
             raw = r.content
             if cached is not None:
                 cached.parent.mkdir(parents=True, exist_ok=True)
-                cached.write_bytes(raw)
+                tmp = cached.with_name(cached.name + ".part")
+                tmp.write_bytes(raw)
+                tmp.replace(cached)  # never leave a cut-short file that later runs would reuse
         with zipfile.ZipFile(io.BytesIO(raw)) as z:
             return z.read(z.namelist()[0]).decode("utf-8")
 

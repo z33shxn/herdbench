@@ -19,17 +19,23 @@ import polars as pl
 
 from herdbench.proxies.native import EPS, period_means
 
-RATIOS = {"bn_global_ls": "count_long_short_ratio", "bn_top_account_ls": "count_toptrader_long_short_ratio",
-          "bn_top_position_ls": "sum_toptrader_long_short_ratio"}
+RATIOS = {
+    "bn_global_ls": "count_long_short_ratio",
+    "bn_top_account_ls": "count_toptrader_long_short_ratio",
+    "bn_top_position_ls": "sum_toptrader_long_short_ratio",
+}
 VISION_LAG = timedelta(minutes=5)
 
 
 def _last_rows(metrics: pl.DataFrame, queries: pl.DataFrame, shift: timedelta, max_stale_minutes: int) -> pl.DataFrame:
     cols = ["symbol", "create_time", *RATIOS.values(), "sum_open_interest"]
     m = metrics.select(cols).with_columns(pl.col("create_time").cast(pl.Datetime("us", "UTC"))).sort("create_time")
-    q = (queries.select(["market", "symbol", "cutoff"])
-         .with_columns(pl.col("cutoff").cast(pl.Datetime("us", "UTC")))
-         .with_columns(_t=pl.col("cutoff") - shift - EPS).sort("_t"))
+    q = (
+        queries.select(["market", "symbol", "cutoff"])
+        .with_columns(pl.col("cutoff").cast(pl.Datetime("us", "UTC")))
+        .with_columns(_t=pl.col("cutoff") - shift - EPS)
+        .sort("_t")
+    )
     tolerance = f"{max_stale_minutes + int(VISION_LAG.total_seconds() // 60)}m"
     return q.join_asof(m, left_on="_t", right_on="create_time", by="symbol", strategy="backward", tolerance=tolerance)
 
@@ -37,31 +43,68 @@ def _last_rows(metrics: pl.DataFrame, queries: pl.DataFrame, shift: timedelta, m
 def ratio_features(metrics: pl.DataFrame, queries: pl.DataFrame, max_stale_minutes: int = 60) -> pl.DataFrame:
     now = _last_rows(metrics, queries, timedelta(0), max_stale_minutes)
     back = _last_rows(metrics, queries, timedelta(days=7), max_stale_minutes).select(
-        ["market", "cutoff", pl.col("sum_open_interest").alias("_oi_back")])
+        ["market", "cutoff", pl.col("sum_open_interest").alias("_oi_back")]
+    )
     out = now.join(back, on=["market", "cutoff"], how="left")
     exprs = [pl.when(pl.col(src) > 0).then(pl.col(src).log()).alias(name) for name, src in RATIOS.items()]
-    exprs.append(pl.when((pl.col("sum_open_interest") > 0) & (pl.col("_oi_back") > 0))
-                 .then((pl.col("sum_open_interest") / pl.col("_oi_back")).log()).alias("bn_oi_change_7d"))
+    exprs.append(
+        pl.when((pl.col("sum_open_interest") > 0) & (pl.col("_oi_back") > 0))
+        .then((pl.col("sum_open_interest") / pl.col("_oi_back")).log())
+        .alias("bn_oi_change_7d")
+    )
     return out.select(["market", "cutoff", *exprs]).sort(["market", "cutoff"])
 
 
 def taker_features(klines: pl.DataFrame, queries: pl.DataFrame) -> pl.DataFrame:
     k = klines.rename({"symbol": "market"}).select(["market", "open_time", "taker_buy_volume", "taker_sell_volume"])
     q = queries.select(["market", "symbol", "cutoff"]).with_columns(pl.col("cutoff").cast(pl.Datetime("us", "UTC")))
-    windows = q.select([pl.col("symbol").alias("market"), (pl.col("cutoff") - timedelta(hours=24)).alias("start"),
-                        pl.col("cutoff").alias("end")])
+    windows = q.select(
+        [
+            pl.col("symbol").alias("market"),
+            (pl.col("cutoff") - timedelta(hours=24)).alias("start"),
+            pl.col("cutoff").alias("end"),
+        ]
+    )
     sums = period_means(k, "open_time", ["taker_buy_volume", "taker_sell_volume"], windows)
-    sums = sums.select([pl.col("market").alias("symbol"), pl.col("end").alias("cutoff"),
-                        pl.when((pl.col("taker_buy_volume") > 0) & (pl.col("taker_sell_volume") > 0))
-                        .then((pl.col("taker_buy_volume") / pl.col("taker_sell_volume")).log()).alias("bn_taker_ls")])
+    sums = sums.select(
+        [
+            pl.col("market").alias("symbol"),
+            pl.col("end").alias("cutoff"),
+            pl.when((pl.col("taker_buy_volume") > 0) & (pl.col("taker_sell_volume") > 0))
+            .then((pl.col("taker_buy_volume") / pl.col("taker_sell_volume")).log())
+            .alias("bn_taker_ls"),
+        ]
+    )
     return q.join(sums, on=["symbol", "cutoff"], how="left").select(["market", "cutoff", "bn_taker_ls"])
 
 
+#: Binance's interest-rate floor: 0.01% per 8 hours, so a settlement equal to it is pinned (premium inside the clamp).
+BASELINE_PER_8H = 0.0001
+
+
 def funding_features(funding: pl.DataFrame, queries: pl.DataFrame) -> pl.DataFrame:
-    f = funding.rename({"symbol": "market"}).select(["market", "time", "funding"])
+    """Mean funding of the settlements in [c - 24h, c) and the share of them pinned at the interest-rate floor."""
+    f = funding.rename({"symbol": "market"})
+    interval = pl.col("interval_hours") if "interval_hours" in f.columns else pl.lit(8)
+    f = f.with_columns(
+        pinned=((pl.col("funding") - BASELINE_PER_8H * interval / 8).abs() < 1e-12).cast(pl.Float64)
+    ).select(["market", "time", "funding", "pinned"])
     q = queries.select(["market", "symbol", "cutoff"]).with_columns(pl.col("cutoff").cast(pl.Datetime("us", "UTC")))
-    windows = q.select([pl.col("symbol").alias("market"), (pl.col("cutoff") - timedelta(hours=24)).alias("start"),
-                        pl.col("cutoff").alias("end")])
-    means = period_means(f, "time", ["funding"], windows).select(
-        [pl.col("market").alias("symbol"), pl.col("end").alias("cutoff"), pl.col("funding").alias("bn_funding_24h")])
-    return q.join(means, on=["symbol", "cutoff"], how="left").select(["market", "cutoff", "bn_funding_24h"])
+    windows = q.select(
+        [
+            pl.col("symbol").alias("market"),
+            (pl.col("cutoff") - timedelta(hours=24)).alias("start"),
+            pl.col("cutoff").alias("end"),
+        ]
+    )
+    means = period_means(f, "time", ["funding", "pinned"], windows).select(
+        [
+            pl.col("market").alias("symbol"),
+            pl.col("end").alias("cutoff"),
+            pl.col("funding").alias("bn_funding_24h"),
+            pl.col("pinned").alias("bn_pinned_share_24h"),
+        ]
+    )
+    return q.join(means, on=["symbol", "cutoff"], how="left").select(
+        ["market", "cutoff", "bn_funding_24h", "bn_pinned_share_24h"]
+    )

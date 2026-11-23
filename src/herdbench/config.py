@@ -87,12 +87,22 @@ class PreRegistration:
 
     # Proxies (expected sign positive against their paired truths)
     confirmatory_proxies: tuple[str, ...] = (
-        "premium_24h", "momentum_7d", "oi_flow_7d",
-        "bn_global_ls", "bn_top_account_ls", "bn_top_position_ls", "bn_taker_ls",
+        "premium_24h",
+        "momentum_7d",
+        "oi_flow_7d",
+        "bn_global_ls",
+        "bn_top_account_ls",
+        "bn_top_position_ls",
+        "bn_taker_ls",
     )
     secondary_directional: tuple[str, ...] = ("funding_24h", "funding_7d", "bn_funding_24h")
     unsigned_proxies: tuple[str, ...] = (
-        "abs_premium_24h", "oi_change_7d", "comovement_30d", "liq_intensity_7d", "oi_to_volume_7d", "bn_oi_change_7d",
+        "abs_premium_24h",
+        "oi_change_7d",
+        "comovement_30d",
+        "liq_intensity_7d",
+        "oi_to_volume_7d",
+        "bn_oi_change_7d",
     )
     comovement_window: int = 30
     comovement_min_returns: int = 20
@@ -128,8 +138,13 @@ class PreRegistration:
     transfer_start: str = "2025-12-15"
     transfer_end: str = "2026-08-14"
     equity_proxies: tuple[str, ...] = (
-        "si_change_pct", "days_to_cover", "log_short_interest",
-        "funding_period", "premium_period", "momentum_period", "comovement_30d",
+        "si_change_pct",
+        "days_to_cover",
+        "log_short_interest",
+        "funding_period",
+        "premium_period",
+        "momentum_period",
+        "comovement_30d",
     )
     equity_negative_sign: tuple[str, ...] = ("si_change_pct", "days_to_cover", "log_short_interest")
 

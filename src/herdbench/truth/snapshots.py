@@ -46,16 +46,21 @@ def read_raw(path: Path) -> pl.DataFrame:
     table = pq.ParquetFile(path).read(columns=READ_COLUMNS)  # ParquetFile: no hive-partition column is added
     df = pl.from_arrow(table)
     assert isinstance(df, pl.DataFrame)
-    return (df.with_columns(pl.col("user").str.to_lowercase(), pl.col("size").cast(pl.Float64),
-                            pl.col("notional").cast(pl.Float64), pl.col("liquidation_price").cast(pl.Float64),
-                            pl.col("account_value").cast(pl.Float64))
-            .filter(pl.col("size") != 0))
+    return df.with_columns(
+        pl.col("user").str.to_lowercase(),
+        pl.col("size").cast(pl.Float64),
+        pl.col("notional").cast(pl.Float64),
+        pl.col("liquidation_price").cast(pl.Float64),
+        pl.col("account_value").cast(pl.Float64),
+    ).filter(pl.col("size") != 0)
 
 
 def dex_expr() -> pl.Expr:
-    return (pl.when(pl.col("market").str.contains(":"))
-            .then(pl.col("market").str.split(":").list.first())
-            .otherwise(pl.lit("main")))
+    return (
+        pl.when(pl.col("market").str.contains(":"))
+        .then(pl.col("market").str.split(":").list.first())
+        .otherwise(pl.lit("main"))
+    )
 
 
 def market_table(raw: pl.DataFrame) -> pl.DataFrame:
@@ -66,14 +71,18 @@ def market_table(raw: pl.DataFrame) -> pl.DataFrame:
         short_ntl=pl.col("notional").filter(~is_long).sum(),
         oi_contracts=pl.col("size").filter(is_long).sum(),
         abs_size=pl.col("size").abs().sum(),
-        n_positions=pl.len().cast(pl.Int64))
-    return (agg.with_columns(
-        dex=dex_expr(),
-        mark=(pl.col("long_ntl") + pl.col("short_ntl")) / pl.col("abs_size"),
-        oi_notional=pl.col("long_ntl"),
-        long_short_gap=(pl.col("long_ntl") - pl.col("short_ntl")) / (pl.col("long_ntl") + pl.col("short_ntl")))
+        n_positions=pl.len().cast(pl.Int64),
+    )
+    return (
+        agg.with_columns(
+            dex=dex_expr(),
+            mark=(pl.col("long_ntl") + pl.col("short_ntl")) / pl.col("abs_size"),
+            oi_notional=pl.col("long_ntl"),
+            long_short_gap=(pl.col("long_ntl") - pl.col("short_ntl")) / (pl.col("long_ntl") + pl.col("short_ntl")),
+        )
         .select(["market", "dex", "mark", "oi_contracts", "oi_notional", "long_short_gap", "n_positions"])
-        .sort("market"))
+        .sort("market")
+    )
 
 
 def entity_account_values(raw: pl.DataFrame, emap: dict[str, str]) -> pl.DataFrame:
@@ -89,8 +98,9 @@ def entity_account_values(raw: pl.DataFrame, emap: dict[str, str]) -> pl.DataFra
 
 
 def protocol_expr(col: str = "user") -> pl.Expr:
-    return (pl.col(col).is_in(list(PREREG.protocol_addresses))
-            | (pl.col(col).str.starts_with(_LIQUIDATOR_PREFIX) & (pl.col(col).str.len_chars() == 42)))
+    return pl.col(col).is_in(list(PREREG.protocol_addresses)) | (
+        pl.col(col).str.starts_with(_LIQUIDATOR_PREFIX) & (pl.col(col).str.len_chars() == 42)
+    )
 
 
 def without_protocol(raw: pl.DataFrame) -> pl.DataFrame:

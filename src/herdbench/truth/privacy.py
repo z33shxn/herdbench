@@ -21,27 +21,42 @@ from herdbench.config import PREREG
 INTERNAL_COLUMNS: tuple[str, ...] = ("top2_share", "suppressed")
 RATIO_COLUMNS: tuple[str, ...] = ("ni", "ai", "lwi", "abs_ni", "top10_share", "fragile_share", "coheld_share", "dtl")
 NOTIONAL_COLUMNS: tuple[str, ...] = ("gross_notional", "net_notional", "oi_notional")
-NESTED_PAIRS: tuple[tuple[str, str], ...] = (("all", "non_mm"), ("non_mm", "top_av"), ("non_mm", "trend"),
-                                             ("non_mm", "contrarian"))
+NESTED_PAIRS: tuple[tuple[str, str], ...] = (
+    ("all", "non_mm"),
+    ("non_mm", "top_av"),
+    ("non_mm", "trend"),
+    ("non_mm", "contrarian"),
+)
 
 
 def _fails(n: pl.Expr, top2: pl.Expr, min_entities: int, top2_max: float) -> pl.Expr:
     return (n < min_entities) | (top2 > top2_max + 1e-12)
 
 
-def apply_disclosure(cells: pl.DataFrame, min_entities: int = PREREG.min_entities,
-                     top2_max: float = PREREG.dominance_top2_max) -> pl.DataFrame:
+def apply_disclosure(
+    cells: pl.DataFrame, min_entities: int = PREREG.min_entities, top2_max: float = PREREG.dominance_top2_max
+) -> pl.DataFrame:
     return cells.with_columns(suppressed=_fails(pl.col("n_entities"), pl.col("top2_share"), min_entities, top2_max))
 
 
-def apply_complement_rule(cells: pl.DataFrame, diffs: pl.DataFrame, min_entities: int = PREREG.min_entities,
-                          top2_max: float = PREREG.dominance_top2_max) -> pl.DataFrame:
+def apply_complement_rule(
+    cells: pl.DataFrame,
+    diffs: pl.DataFrame,
+    min_entities: int = PREREG.min_entities,
+    top2_max: float = PREREG.dominance_top2_max,
+) -> pl.DataFrame:
     """``diffs``: date, market, parent, child, n_entities, top2_share of each parent-minus-child set."""
-    bad = (diffs.filter(_fails(pl.col("n_entities"), pl.col("top2_share"), min_entities, top2_max))
-           .select(["date", "market", pl.col("parent").alias("cohort")]).unique()
-           .with_columns(_hit=pl.lit(True)))
-    return (cells.join(bad, on=["date", "market", "cohort"], how="left")
-            .with_columns(suppressed=pl.col("suppressed") | pl.col("_hit").fill_null(False)).drop("_hit"))
+    bad = (
+        diffs.filter(_fails(pl.col("n_entities"), pl.col("top2_share"), min_entities, top2_max))
+        .select(["date", "market", pl.col("parent").alias("cohort")])
+        .unique()
+        .with_columns(_hit=pl.lit(True))
+    )
+    return (
+        cells.join(bad, on=["date", "market", "cohort"], how="left")
+        .with_columns(suppressed=pl.col("suppressed") | pl.col("_hit").fill_null(False))
+        .drop("_hit")
+    )
 
 
 def published(cells: pl.DataFrame) -> pl.DataFrame:
@@ -51,7 +66,7 @@ def published(cells: pl.DataFrame) -> pl.DataFrame:
 def _sig2(x: float | None) -> float | None:
     if x is None or x == 0 or (isinstance(x, float) and math.isnan(x)):
         return x
-    return float(round(x, 1 - int(math.floor(math.log10(abs(x))))))
+    return float(round(x, 1 - math.floor(math.log10(abs(x)))))
 
 
 def publish_rounding(df: pl.DataFrame, decimals: int = 3) -> pl.DataFrame:

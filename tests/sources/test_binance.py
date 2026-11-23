@@ -20,9 +20,11 @@ def metrics_text() -> str:
 
 def test_metrics_url_follows_the_vision_layout():
     assert binance.metrics_url("BTCUSDT", date(2025, 12, 15)) == (
-        "https://data.binance.vision/data/futures/um/daily/metrics/BTCUSDT/BTCUSDT-metrics-2025-12-15.zip")
+        "https://data.binance.vision/data/futures/um/daily/metrics/BTCUSDT/BTCUSDT-metrics-2025-12-15.zip"
+    )
     assert binance.funding_url("BTCUSDT", 2025, 12) == (
-        "https://data.binance.vision/data/futures/um/monthly/fundingRate/BTCUSDT/BTCUSDT-fundingRate-2025-12.zip")
+        "https://data.binance.vision/data/futures/um/monthly/fundingRate/BTCUSDT/BTCUSDT-fundingRate-2025-12.zip"
+    )
 
 
 def test_parse_metrics_sorts_unsorted_rows_and_types_every_column():
@@ -57,7 +59,8 @@ def test_parse_klines_reads_taker_volumes_from_the_header_file():
     assert first["taker_sell_volume"] == pytest.approx(5804.585 - 2043.971)
     assert len(df) == 12
     assert binance.klines_url("BTCUSDT", "5m", 2025, 12) == (
-        "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2025-12.zip")
+        "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2025-12.zip"
+    )
 
 
 def test_binance_symbol_maps_the_thousand_prefix():
@@ -80,7 +83,8 @@ def test_vision_downloads_a_day_and_returns_none_when_the_day_is_missing(tmp_pat
     with serve(routes) as base:
         v = binance.Vision(base=base, http=HttpClient(retries=2, backoff=0.0), cache_dir=tmp_path)
         df = v.metrics("BTCUSDT", day)
-        assert df is not None and len(df) == 288
+        assert df is not None
+        assert len(df) == 288
         assert v.metrics("BTCUSDT", date(2025, 12, 16)) is None
         before = len(routes.log)
         assert len(v.metrics("BTCUSDT", day)) == 288  # served from the local cache

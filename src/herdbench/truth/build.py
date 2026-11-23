@@ -11,6 +11,7 @@ Stages (each cached on disk and safe to rerun):
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -28,6 +29,13 @@ from herdbench.truth.privacy import NESTED_PAIRS, apply_complement_rule, apply_d
 _FILL = re.compile(r"^fills_(\d{4})-(\d{2})-(\d{2})\.parquet$")
 FILL_READ = ["coin", "asset_class", "price", "size", "side", "address", "crossed", "is_liquidation", "timestamp"]
 KINDS = ("activity", "liquidations", "volume", "hourly", "liq_hourly")
+_DAILY_MAKERS = {
+    "activity": mm.daily_activity,
+    "liquidations": market_aggregates.daily_liquidations,
+    "volume": market_aggregates.daily_volume,
+    "hourly": lambda f, _day: market_aggregates.hourly_bars(f),
+    "liq_hourly": lambda f, _day: market_aggregates.hourly_liquidations(f),
+}
 
 
 def _atomic_parquet(df: pl.DataFrame, path: Path) -> None:
@@ -55,13 +63,8 @@ def summarize_fill_days(raw: Path, derived: Path) -> list[date]:
         if not todo:
             continue
         f = pl.read_parquet(path, columns=FILL_READ)
-        makers = {"activity": lambda: mm.daily_activity(f, day),
-                  "liquidations": lambda: market_aggregates.daily_liquidations(f, day),
-                  "volume": lambda: market_aggregates.daily_volume(f, day),
-                  "hourly": lambda: market_aggregates.hourly_bars(f),
-                  "liq_hourly": lambda: market_aggregates.hourly_liquidations(f)}
         for kind in todo:
-            _atomic_parquet(makers[kind](), outs[kind])
+            _atomic_parquet(_DAILY_MAKERS[kind](f, day), outs[kind])
     return sorted(days)
 
 
@@ -89,10 +92,28 @@ def market_panel(index: dict[date, Path], derived: Path) -> pl.DataFrame:
         return pl.read_parquet(cache)
     parts = []
     for day, path in index.items():
-        parts.append(snapshots.market_table(snapshots.read_raw(path))
-                     .with_columns(date=pl.lit(day), capture_ms=pl.lit(snapshots.capture_ms(path))))
-    panel = pl.concat(parts).select(["date", "market", "dex", "mark", "oi_contracts", "oi_notional",
-                                     "long_short_gap", "n_positions", "capture_ms"]).sort(["date", "market"])
+        parts.append(
+            snapshots.market_table(snapshots.read_raw(path)).with_columns(
+                date=pl.lit(day), capture_ms=pl.lit(snapshots.capture_ms(path))
+            )
+        )
+    panel = (
+        pl.concat(parts)
+        .select(
+            [
+                "date",
+                "market",
+                "dex",
+                "mark",
+                "oi_contracts",
+                "oi_notional",
+                "long_short_gap",
+                "n_positions",
+                "capture_ms",
+            ]
+        )
+        .sort(["date", "market"])
+    )
     _atomic_parquet(panel, cache)
     side.write_text(json.dumps(files), encoding="utf-8")
     return panel
@@ -115,10 +136,13 @@ def style_panel(index: dict[date, Path], markets: pl.DataFrame, derived: Path) -
                 if prev_day != t1 or prev is None:
                     prev = snapshots.without_protocol(snapshots.read_raw(index[t1])).select(["user", "market", "size"])
                 part = style.day_contributions(
-                    t, cur, prev,
+                    t,
+                    cur,
+                    prev,
                     markets.filter(pl.col("date") == t).select(["market", "mark"]),
                     markets.filter(pl.col("date") == t1).select(["market", "mark"]),
-                    markets.filter(pl.col("date") == t2).select(["market", "mark"]))
+                    markets.filter(pl.col("date") == t2).select(["market", "mark"]),
+                )
                 _atomic_parquet(part, cache)
                 prev_day, prev = t, cur
             parts.append(part)
@@ -140,43 +164,128 @@ def robustness_rules(prereg: PreRegistration = PREREG) -> dict[str, tuple[float,
     return rules
 
 
-def candidate_entities(activity_entity: pl.DataFrame, fill_days: Iterable[date], dates: Iterable[date],
-                       prereg: PreRegistration = PREREG) -> set[str]:
+def candidate_entities(
+    activity_entity: pl.DataFrame, fill_days: Iterable[date], dates: Iterable[date], prereg: PreRegistration = PREREG
+) -> set[str]:
     """Entities passing the loosest share, size and activity tests in any window (turnover not applied)."""
     loosest = min((prereg.mm_maker_share, *prereg.mm_robustness_maker_shares))
     fill_days = set(fill_days)
     out: set[str] = set()
     for d in dates:
-        s = mm.set_for(activity_entity, fill_days, d, maker_share=loosest, window_days=prereg.mm_window_days,
-                       min_fill_days=prereg.mm_min_fill_days, min_notional=prereg.mm_min_notional,
-                       min_active_days=prereg.mm_min_active_days)
+        s = mm.set_for(
+            activity_entity,
+            fill_days,
+            d,
+            maker_share=loosest,
+            window_days=prereg.mm_window_days,
+            min_fill_days=prereg.mm_min_fill_days,
+            min_notional=prereg.mm_min_notional,
+            min_active_days=prereg.mm_min_active_days,
+        )
         if s:
             out |= s
     return out
 
 
-def entity_gross_panel(index: dict[date, Path], emap: dict[str, str], entities_wanted: set[str],
-                       derived: Path | None = None) -> pl.DataFrame:
-    """Gross position notional per snapshot date for the wanted entities (for the turnover test)."""
+def entity_map_targets(
+    index: dict[date, Path],
+    markets: pl.DataFrame,
+    activity: pl.DataFrame,
+    fill_days: Iterable[date],
+    prereg: PreRegistration = PREREG,
+) -> pl.DataFrame:
+    """Addresses whose entity is looked up before the truth is built.
+
+    Two groups, both found at the address level because entities are not known yet: every market-maker
+    candidate under the loosest maker-share rule in any 30-day window (no turnover test), and every address
+    that is ever one of the three largest holders of a market with at least $1M open interest on that
+    snapshot. Every other address is its own entity.
+    """
+    loosest = min((prereg.mm_maker_share, *prereg.mm_robustness_maker_shares))
+    act = activity.with_columns(pl.col("address").cast(pl.String)).rename({"address": "entity"})
+    fill_days = set(fill_days)
+    cand: set[str] = set()
+    for d in index:
+        s = mm.set_for(
+            act,
+            fill_days,
+            d,
+            maker_share=loosest,
+            window_days=prereg.mm_window_days,
+            min_fill_days=prereg.mm_min_fill_days,
+            min_notional=prereg.mm_min_notional,
+            min_active_days=prereg.mm_min_active_days,
+        )
+        if s:
+            cand |= s
+    big = markets.filter(pl.col("oi_notional") >= prereg.min_oi_notional).select(["date", "market"])
+    top: set[str] = set()
+    for d, path in index.items():
+        wanted = big.filter(pl.col("date") == d)["market"].to_list()
+        pos = snapshots.without_protocol(snapshots.read_raw(path)).filter(pl.col("market").is_in(wanted))
+        top |= set(pos.sort("notional", descending=True).group_by("market").head(3)["user"].to_list())
+    union = sorted(cand | top)
+    return pl.DataFrame(
+        {"address": union, "mm_candidate": [a in cand for a in union], "top3": [a in top for a in union]}
+    )
+
+
+def entity_gross_panel(
+    index: dict[date, Path], emap: dict[str, str], entities_wanted: set[str], derived: Path | None = None
+) -> pl.DataFrame:
+    """Gross position notional per snapshot date for the wanted entities (for the turnover test).
+
+    The cache is keyed on the entity map, the wanted entities and the snapshot files, so a changed map
+    is never served stale numbers.
+    """
     cache = Path(derived) / "entity_gross.parquet" if derived else None
-    if cache is not None and cache.exists():
+    key = hashlib.sha256(
+        json.dumps(
+            {
+                "map": entities.map_hash(emap),
+                "wanted": sorted(entities_wanted),
+                "files": [Path(p).name for p in index.values()],
+            }
+        ).encode()
+    ).hexdigest()
+    side = cache.with_suffix(".json") if cache is not None else None
+    if (
+        cache is not None
+        and side is not None
+        and cache.exists()
+        and side.exists()
+        and json.loads(side.read_text(encoding="utf-8")).get("key") == key
+    ):
         return pl.read_parquet(cache)
     wanted = sorted(entities_wanted)
     parts = []
     for day, path in index.items():
         raw = entities.attach(snapshots.without_protocol(snapshots.read_raw(path)), emap)
-        parts.append(raw.filter(pl.col("entity").is_in(wanted)).group_by("entity")
-                     .agg(gross=pl.col("notional").sum()).with_columns(date=pl.lit(day)))
-    out = (pl.concat(parts).select(["date", "entity", "gross"]).sort(["date", "entity"]) if parts
-           else pl.DataFrame(schema={"date": pl.Date, "entity": pl.String, "gross": pl.Float64}))
-    if cache is not None:
+        parts.append(
+            raw.filter(pl.col("entity").is_in(wanted))
+            .group_by("entity")
+            .agg(gross=pl.col("notional").sum())
+            .with_columns(date=pl.lit(day))
+        )
+    out = (
+        pl.concat(parts).select(["date", "entity", "gross"]).sort(["date", "entity"])
+        if parts
+        else pl.DataFrame(schema={"date": pl.Date, "entity": pl.String, "gross": pl.Float64})
+    )
+    if cache is not None and side is not None:
         _atomic_parquet(out, cache)
+        side.write_text(json.dumps({"key": key}), encoding="utf-8")
     return out
 
 
-def market_maker_sets(activity_entity: pl.DataFrame, fill_days: Iterable[date], dates: Iterable[date],
-                      gross: pl.DataFrame, snapshot_dates: Iterable[date],
-                      prereg: PreRegistration = PREREG) -> dict[str, dict[date, set[str] | None]]:
+def market_maker_sets(
+    activity_entity: pl.DataFrame,
+    fill_days: Iterable[date],
+    dates: Iterable[date],
+    gross: pl.DataFrame,
+    snapshot_dates: Iterable[date],
+    prereg: PreRegistration = PREREG,
+) -> dict[str, dict[date, set[str] | None]]:
     """Market-maker set per rule and date, with the last known set carried forward over fill gaps."""
     fill_days, snaps = set(fill_days), sorted(set(snapshot_dates))
     out: dict[str, dict[date, set[str] | None]] = {}
@@ -184,10 +293,19 @@ def market_maker_sets(activity_entity: pl.DataFrame, fill_days: Iterable[date], 
         known: dict[date, set[str]] = {}
         per_day: dict[date, set[str] | None] = {}
         for d in sorted(dates):
-            s = mm.set_for(activity_entity, fill_days, d, maker_share=share, window_days=prereg.mm_window_days,
-                           min_fill_days=prereg.mm_min_fill_days, min_notional=prereg.mm_min_notional,
-                           min_active_days=prereg.mm_min_active_days, gross=gross, snapshot_dates=snaps,
-                           turnover_multiple=turnover)
+            s = mm.set_for(
+                activity_entity,
+                fill_days,
+                d,
+                maker_share=share,
+                window_days=prereg.mm_window_days,
+                min_fill_days=prereg.mm_min_fill_days,
+                min_notional=prereg.mm_min_notional,
+                min_active_days=prereg.mm_min_active_days,
+                gross=gross,
+                snapshot_dates=snaps,
+                turnover_multiple=turnover,
+            )
             if s is not None:
                 known[d] = s
             per_day[d] = s if s is not None else mm.carry_forward(known, d, prereg.mm_carry_forward_days)
@@ -195,8 +313,9 @@ def market_maker_sets(activity_entity: pl.DataFrame, fill_days: Iterable[date], 
     return out
 
 
-def lagged_account_values(index: dict[date, Path], emap: dict[str, str], day: date,
-                          prereg: PreRegistration = PREREG) -> pl.DataFrame | None:
+def lagged_account_values(
+    index: dict[date, Path], emap: dict[str, str], day: date, prereg: PreRegistration = PREREG
+) -> pl.DataFrame | None:
     """Entity account values from the snapshot 8 days earlier, or the latest one 8 to 14 days earlier."""
     for lag in range(prereg.top_av_lag_days, prereg.top_av_lag_max_days + 1):
         src = day - timedelta(days=lag)
@@ -211,22 +330,46 @@ def _diffs(assigned: pl.DataFrame, day: date) -> pl.DataFrame:
         d = assigned.filter(pl.col(parent) & ~pl.col(child))
         if d.height == 0:
             continue
-        g = (d.sort(["market", "notional"], descending=[False, True])
-             .group_by("market", maintain_order=True)
-             .agg(n_entities=pl.len().cast(pl.Int64), top2=pl.col("notional").head(2).sum(),
-                  gross=pl.col("notional").sum()))
-        rows.append(g.with_columns(date=pl.lit(day), parent=pl.lit(parent), child=pl.lit(child),
-                                   top2_share=pl.col("top2") / pl.col("gross"))
-                    .select(["date", "market", "parent", "child", "n_entities", "top2_share"]))
+        g = (
+            d.sort(["market", "notional"], descending=[False, True])
+            .group_by("market", maintain_order=True)
+            .agg(
+                n_entities=pl.len().cast(pl.Int64),
+                top2=pl.col("notional").head(2).sum(),
+                gross=pl.col("notional").sum(),
+            )
+        )
+        rows.append(
+            g.with_columns(
+                date=pl.lit(day),
+                parent=pl.lit(parent),
+                child=pl.lit(child),
+                top2_share=pl.col("top2") / pl.col("gross"),
+            ).select(["date", "market", "parent", "child", "n_entities", "top2_share"])
+        )
     if not rows:
-        return pl.DataFrame(schema={"date": pl.Date, "market": pl.String, "parent": pl.String, "child": pl.String,
-                                    "n_entities": pl.Int64, "top2_share": pl.Float64})
+        return pl.DataFrame(
+            schema={
+                "date": pl.Date,
+                "market": pl.String,
+                "parent": pl.String,
+                "child": pl.String,
+                "n_entities": pl.Int64,
+                "top2_share": pl.Float64,
+            }
+        )
     return pl.concat(rows)
 
 
-def truth_cells(index: dict[date, Path], markets: pl.DataFrame, mm_sets: dict[str, dict[date, set[str] | None]],
-                contrib_entity: pl.DataFrame, emap: dict[str, str], dates: Iterable[date],
-                prereg: PreRegistration = PREREG) -> pl.DataFrame:
+def truth_cells(
+    index: dict[date, Path],
+    markets: pl.DataFrame,
+    mm_sets: dict[str, dict[date, set[str] | None]],
+    contrib_entity: pl.DataFrame,
+    emap: dict[str, str],
+    dates: Iterable[date],
+    prereg: PreRegistration = PREREG,
+) -> pl.DataFrame:
     """Stage 4: every cohort cell for every requested snapshot date, with publication flags.
 
     ``suppressed`` marks cells that fail the cell or the complement rule; robustness cohorts are kept for
@@ -242,28 +385,41 @@ def truth_cells(index: dict[date, Path], markets: pl.DataFrame, mm_sets: dict[st
         eligible = set(prev.filter(pl.col("oi_notional") >= prereg.min_oi_notional)["market"].to_list())
         raw = snapshots.without_protocol(snapshots.read_raw(index[day]))
         pos = entities.attach(raw, emap).join(mk.select(["market", "mark"]), on="market", how="inner")
-        held = coheld_flags(entity_positions(pos, fragile_distance=prereg.fragile_distance), eligible,
-                            prereg.coheld_min_other)
+        held = coheld_flags(
+            entity_positions(pos, fragile_distance=prereg.fragile_distance), eligible, prereg.coheld_min_other
+        )
         gross_all = held.group_by("entity").agg(_g=pl.col("gross_addr").sum())
-        lev = (gross_all.join(snapshots.entity_account_values(raw, emap), on="entity", how="left")
-               .with_columns(w=pl.when(pl.col("av") > 0)
-                             .then(pl.min_horizontal(pl.col("_g") / pl.col("av"), pl.lit(prereg.lwi_leverage_cap)))
-                             .otherwise(pl.lit(prereg.lwi_leverage_cap)))
-               .select(["entity", "w"]))
+        lev = (
+            gross_all.join(snapshots.entity_account_values(raw, emap), on="entity", how="left")
+            .with_columns(
+                w=pl.when(pl.col("av") > 0)
+                .then(pl.min_horizontal(pl.col("_g") / pl.col("av"), pl.lit(prereg.lwi_leverage_cap)))
+                .otherwise(pl.lit(prereg.lwi_leverage_cap))
+            )
+            .select(["entity", "w"])
+        )
         held = held.join(lev, on="entity", how="left")
         scores = style.trend_scores(contrib_entity, day, prereg.style_window_days, prereg.style_min_flows, key="entity")
         robust = {n: mm_sets[n].get(day) for n in prereg.robustness_cohorts if n in mm_sets}
-        assigned = cohorts.assign(held, mm_sets["non_mm"].get(day), robust, scores,
-                                  lagged_account_values(index, emap, day, prereg),
-                                  top_fraction=prereg.top_av_fraction, threshold=prereg.trend_threshold)
+        assigned = cohorts.assign(
+            held,
+            mm_sets["non_mm"].get(day),
+            robust,
+            scores,
+            lagged_account_values(index, emap, day, prereg),
+            top_fraction=prereg.top_av_fraction,
+            threshold=prereg.trend_threshold,
+        )
         stacked = [assigned.filter(pl.col(c)).with_columns(cohort=pl.lit(c)) for c in names]
         stacked = [x for x in stacked if x.height]
         if not stacked:
             continue
         cells = cell_metrics(pl.concat(stacked).with_columns(date=pl.lit(day)), top_share=prereg.top_share_fraction)
-        cells = (cells.join(mk.select(["market", "dex", "oi_notional"]), on="market", how="left")
-                 .join(prev.select(["market", pl.col("oi_notional").alias("oi_prev")]), on="market", how="left")
-                 .with_columns(eligible=pl.col("market").is_in(sorted(eligible))))
+        cells = (
+            cells.join(mk.select(["market", "dex", "oi_notional"]), on="market", how="left")
+            .join(prev.select(["market", pl.col("oi_notional").alias("oi_prev")]), on="market", how="left")
+            .with_columns(eligible=pl.col("market").is_in(sorted(eligible)))
+        )
         parts.append(cells)
         diff_parts.append(_diffs(assigned, day))
     if not parts:
@@ -274,10 +430,32 @@ def truth_cells(index: dict[date, Path], markets: pl.DataFrame, mm_sets: dict[st
     return out.sort(["date", "market", "cohort"])
 
 
-PUBLISHED_COLUMNS = ["date", "market", "dex", "cohort", "n_entities", "gross_notional", "net_notional", "ni", "ai",
-                     "lwi", "abs_ni", "top10_share", "fragile_share", "coheld_share", "oi_notional", "eligible"]
+PUBLISHED_COLUMNS = [
+    "date",
+    "cutoff",
+    "market",
+    "dex",
+    "cohort",
+    "n_entities",
+    "gross_notional",
+    "net_notional",
+    "ni",
+    "ai",
+    "lwi",
+    "abs_ni",
+    "top10_share",
+    "fragile_share",
+    "coheld_share",
+    "dtl",
+    "oi_notional",
+    "eligible",
+]
 
 
 def publishable(cells: pl.DataFrame) -> pl.DataFrame:
-    """The public truth panel: publishable cells only, rounded, no internal columns, no addresses."""
-    return publish_rounding(published(cells).select(PUBLISHED_COLUMNS))
+    """The public truth panel: publishable cells only, rounded, no internal columns, no addresses.
+
+    ``cutoff`` (the proxy cutoff of the snapshot) and ``dtl`` are added by the pipeline and kept when present.
+    """
+    cols = [c for c in PUBLISHED_COLUMNS if c in cells.columns]
+    return publish_rounding(published(cells).select(cols)).sort(["date", "market", "cohort"])

@@ -23,8 +23,9 @@ def doc_values() -> dict[str, str]:
 
 def same(field_value, text: str) -> bool:
     if isinstance(field_value, tuple):
-        return [str(v) for v in field_value] == [p.strip() for p in text.split(",")] or \
-            [float(v) for v in field_value] == [float(p) for p in text.split(",")]
+        return [str(v) for v in field_value] == [p.strip() for p in text.split(",")] or [
+            float(v) for v in field_value
+        ] == [float(p) for p in text.split(",")]
     if isinstance(field_value, bool):
         return str(field_value).lower() == text.lower()
     if isinstance(field_value, int) and text.startswith("0x"):
@@ -38,7 +39,9 @@ def same(field_value, text: str) -> bool:
 def test_every_parameter_is_stated_in_the_document_with_the_same_value(field):
     values = doc_values()
     assert field in values, f"{field} is missing from docs/preregistration.md"
-    assert same(getattr(PREREG, field), values[field]), f"{field}: code {getattr(PREREG, field)!r} vs doc {values[field]!r}"
+    assert same(getattr(PREREG, field), values[field]), (
+        f"{field}: code {getattr(PREREG, field)!r} vs doc {values[field]!r}"
+    )
 
 
 def test_the_document_states_no_parameter_the_code_lacks():

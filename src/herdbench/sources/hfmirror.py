@@ -33,8 +33,20 @@ HUB = "https://huggingface.co"
 
 #: The 14 fill columns this project reads; everything a gate or a cohort rule needs, nothing else.
 FILL_COLUMNS: tuple[str, ...] = (
-    "coin", "dex", "asset_class", "price", "size", "side", "timestamp", "direction",
-    "address", "crossed", "twap_id", "is_liquidation", "liquidation_mark_px", "liquidation_method",
+    "coin",
+    "dex",
+    "asset_class",
+    "price",
+    "size",
+    "side",
+    "timestamp",
+    "direction",
+    "address",
+    "crossed",
+    "twap_id",
+    "is_liquidation",
+    "liquidation_mark_px",
+    "liquidation_method",
 )
 
 _SNAPSHOT_RE = re.compile(r"^perp_archive/date=(\d{4}-\d{2}-\d{2})/(\d+)_(\d+)\.parquet$")
@@ -127,21 +139,22 @@ class SparseFile(io.RawIOBase):
         for seg_start, data in self._segments:
             if seg_start <= start and end <= seg_start + len(data):
                 self._pos = end
-                return data[start - seg_start:end - seg_start]
+                return data[start - seg_start : end - seg_start]
         self.on_demand_reads += 1
         data = self._fetch(start, end - 1)
         self.add(start, data)
         self._pos = end
         return data
 
-    def readinto(self, b) -> int:  # type: ignore[override]
+    def readinto(self, b) -> int:
         data = self.read(len(b))
-        b[:len(data)] = data
+        b[: len(data)] = data
         return len(data)
 
 
-def read_parquet_columns(fetch: Fetch, size: int, columns: Sequence[str], max_gap: int = 1 << 20,
-                         workers: int = 4) -> tuple[pa.Table, dict]:
+def read_parquet_columns(
+    fetch: Fetch, size: int, columns: Sequence[str], max_gap: int = 1 << 20, workers: int = 4
+) -> tuple[pa.Table, dict]:
     """Read ``columns`` of a remote Parquet file of ``size`` bytes, fetching only their byte spans.
 
     Correctness never depends on the span plan: any byte the reader needs that was not prefetched is
@@ -173,20 +186,29 @@ def read_parquet_columns(fetch: Fetch, size: int, columns: Sequence[str], max_ga
             spans.append((start, start + col.total_compressed_size - 1))
     plan = coalesce(spans, max_gap)
     with cf.ThreadPoolExecutor(max(1, workers)) as pool:
-        for (start, _end), data in zip(plan, pool.map(lambda se: fetch(se[0], se[1]), plan)):
+        for (start, _end), data in zip(plan, pool.map(lambda se: fetch(se[0], se[1]), plan), strict=True):
             sparse.add(start, data)
     table = pq.ParquetFile(sparse).read(columns=list(columns))
     if table.num_rows != md.num_rows:
         raise MirrorError(f"read {table.num_rows} rows but the footer records {md.num_rows}")
-    info = {"rows": md.num_rows, "row_groups": md.num_row_groups, "bytes_transferred": sparse.bytes_fetched,
-            "on_demand_reads": sparse.on_demand_reads, "created_by": md.created_by}
+    info = {
+        "rows": md.num_rows,
+        "row_groups": md.num_row_groups,
+        "bytes_transferred": sparse.bytes_fetched,
+        "on_demand_reads": sparse.on_demand_reads,
+        "created_by": md.created_by,
+    }
     return table, info
 
 
 def slim(table: pa.Table) -> pa.Table:
     """Cast decimal columns (price, size, liquidation mark) to float64; leave every other column as is."""
-    return pa.table({name: (col.cast(pa.float64()) if pa.types.is_decimal(col.type) else col)
-                     for name, col in zip(table.column_names, table.columns)})
+    return pa.table(
+        {
+            name: (col.cast(pa.float64()) if pa.types.is_decimal(col.type) else col)
+            for name, col in zip(table.column_names, table.columns, strict=True)
+        }
+    )
 
 
 class Mirror:
@@ -227,8 +249,11 @@ class Mirror:
             hit = self._resolved.get(path)
         if hit and not force and time.time() - hit[1] < 1800:
             return hit[0]
-        r = self.http.get(f"{self.hub}/datasets/{self.repo}/resolve/{self.revision}/{path}",
-                          headers={"Range": "bytes=0-0"}, allow_redirects=True)
+        r = self.http.get(
+            f"{self.hub}/datasets/{self.repo}/resolve/{self.revision}/{path}",
+            headers={"Range": "bytes=0-0"},
+            allow_redirects=True,
+        )
         if r.status_code not in (200, 206):
             raise MirrorError(f"cannot resolve {path}: HTTP {r.status_code}")
         with self._lock:
@@ -239,7 +264,9 @@ class Mirror:
         want = end_inclusive - start + 1
         last = ""
         for attempt in range(3):  # a fresh resolve recovers from an expired signed URL
-            r = self.http.get(self.resolve(path, force=attempt > 0), headers={"Range": f"bytes={start}-{end_inclusive}"})
+            r = self.http.get(
+                self.resolve(path, force=attempt > 0), headers={"Range": f"bytes={start}-{end_inclusive}"}
+            )
             if r.status_code == 206 and len(r.content) == want:
                 return r.content
             last = f"HTTP {r.status_code}, {len(r.content)} of {want} bytes"
@@ -311,19 +338,29 @@ def fetch_fills_slim(mirror: Mirror, root: Path, files: Iterable[RemoteFile], wo
         side = out.with_suffix(".json")
         if out.exists() and side.exists():
             meta = json.loads(side.read_text(encoding="utf-8"))
-            if (meta.get("source_sha256") == rf.sha256 and meta.get("revision") == mirror.revision
-                    and meta.get("columns") == list(FILL_COLUMNS)):
+            if (
+                meta.get("source_sha256") == rf.sha256
+                and meta.get("revision") == mirror.revision
+                and meta.get("columns") == list(FILL_COLUMNS)
+            ):
                 return out
         t0 = time.monotonic()
         table, info = mirror.read_columns(rf, FILL_COLUMNS)
         table = slim(table)
         out.parent.mkdir(parents=True, exist_ok=True)
         tmp = out.with_name(out.name + ".tmp")
-        pq.write_table(table, tmp, compression="zstd", compression_level=3, use_dictionary=True,
-                       row_group_size=1_000_000)
+        pq.write_table(
+            table, tmp, compression="zstd", compression_level=3, use_dictionary=True, row_group_size=1_000_000
+        )
         os.replace(tmp, out)
-        info.update({"columns": list(FILL_COLUMNS), "decimal_to_float64": ["price", "size", "liquidation_mark_px"],
-                     "seconds": round(time.monotonic() - t0, 1), "local_bytes": out.stat().st_size})
+        info.update(
+            {
+                "columns": list(FILL_COLUMNS),
+                "decimal_to_float64": ["price", "size", "liquidation_mark_px"],
+                "seconds": round(time.monotonic() - t0, 1),
+                "local_bytes": out.stat().st_size,
+            }
+        )
         _write_json(side, info)
         return out
 

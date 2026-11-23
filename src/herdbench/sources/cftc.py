@@ -40,20 +40,28 @@ BRIDGE: dict[str, BridgeSpec] = {
     "xyz:GBP": BridgeSpec("096742", "tff", "British pound, CME"),
 }
 
-_GROUPS = {"disaggregated": ("m_money_positions_long_all", "m_money_positions_short_all"),
-           "tff": ("lev_money_positions_long", "lev_money_positions_short")}
+_GROUPS = {
+    "disaggregated": ("m_money_positions_long_all", "m_money_positions_short_all"),
+    "tff": ("lev_money_positions_long", "lev_money_positions_short"),
+}
 
 
 def _parse(rows: list[dict], report: str) -> pd.DataFrame:
     long_col, short_col = _GROUPS[report]
     df = pd.DataFrame(rows)
-    out = pd.DataFrame({
-        "report_date": pd.to_datetime(df["report_date_as_yyyy_mm_dd"].str.slice(0, 10)),
-        "open_interest": pd.to_numeric(df["open_interest_all"]).astype("int64"),
-        "long": pd.to_numeric(df[long_col]).astype("int64"),
-        "short": pd.to_numeric(df[short_col]).astype("int64"),
-    })
+    out = pd.DataFrame(
+        {
+            "report_date": pd.to_datetime(df["report_date_as_yyyy_mm_dd"].str.slice(0, 10)),
+            "open_interest": pd.to_numeric(df["open_interest_all"]).astype("int64"),
+            "long": pd.to_numeric(df[long_col]).astype("int64"),
+            "short": pd.to_numeric(df[short_col]).astype("int64"),
+        }
+    )
     out["net_share"] = (out["long"] - out["short"]) / out["open_interest"]
+    if report == "tff" and "asset_mgr_positions_long" in df:
+        out["asset_net_share"] = (
+            pd.to_numeric(df["asset_mgr_positions_long"]) - pd.to_numeric(df["asset_mgr_positions_short"])
+        ) / out["open_interest"]
     return out.sort_values("report_date").reset_index(drop=True)
 
 
@@ -73,10 +81,16 @@ class COT:
         self.http = http or HttpClient(min_interval=0.2)
 
     def positions(self, spec: BridgeSpec, start: str, end: str) -> pd.DataFrame:
-        query = urlencode({
-            "$where": (f"cftc_contract_market_code='{spec.code}' AND report_date_as_yyyy_mm_dd >= '{start}T00:00:00'"
-                       f" AND report_date_as_yyyy_mm_dd <= '{end}T00:00:00'"),
-            "$order": "report_date_as_yyyy_mm_dd", "$limit": 5000})
+        query = urlencode(
+            {
+                "$where": (
+                    f"cftc_contract_market_code='{spec.code}' AND report_date_as_yyyy_mm_dd >= '{start}T00:00:00'"
+                    f" AND report_date_as_yyyy_mm_dd <= '{end}T00:00:00'"
+                ),
+                "$order": "report_date_as_yyyy_mm_dd",
+                "$limit": 5000,
+            }
+        )
         r = self.http.get(f"{self.base}/{VIEWS[spec.report]}.json?{query}")
         if r.status_code != 200:
             raise RuntimeError(f"CFTC returned HTTP {r.status_code} for {spec.code}")

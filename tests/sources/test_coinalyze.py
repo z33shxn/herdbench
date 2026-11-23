@@ -9,7 +9,7 @@ SECRET = "test-key-0000"
 
 def test_missing_key_is_an_explicit_error(monkeypatch):
     monkeypatch.delenv("COINALYZE_API_KEY", raising=False)
-    with pytest.raises(coinalyze.MissingKey):
+    with pytest.raises(coinalyze.MissingKeyError):
         coinalyze.Coinalyze()
 
 
@@ -22,7 +22,7 @@ def test_history_sends_the_key_as_a_query_parameter_and_parses_rows(monkeypatch)
         df = client.history("open-interest-history", "BTC.H", "daily", 1765756800, 1765843200)
     assert df.loc[0, "c"] == 1.5
     assert df.loc[0, "symbol"] == "BTC.H"
-    sent = [p for method, p, _h in routes.log if method == "GET"][0]
+    sent = next(p for method, p, _h in routes.log if method == "GET")
     assert f"api_key={SECRET}" in sent
 
 

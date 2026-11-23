@@ -1,8 +1,8 @@
 """Ironflow's public Hyperliquid datasets on Hugging Face (CC BY 4.0; no login).
 
 Used for hourly funding rates and premiums: every settled rate from Hyperliquid's own ``fundingHistory``,
-in monthly Parquet files, which Ironflow states it checked row for row against the API. HerdBench pins a
-dataset revision and cross-checks a sample against the API (``herdbench check``). Market names carry a
+in monthly Parquet files. HerdBench pins a dataset revision and cross-checks a random sample of market-hours
+against the API itself (``herdbench check``, results/funding_check.json). Market names carry a
 ``-PERP`` suffix that is removed so they match snapshot market names.
 """
 
@@ -24,8 +24,9 @@ def normalize_market(name: str) -> str:
 
 
 class Ironflow:
-    def __init__(self, dataset: str, revision: str, hub: str = HUB, http: HttpClient | None = None,
-                 cache_dir: Path | None = None):
+    def __init__(
+        self, dataset: str, revision: str, hub: str = HUB, http: HttpClient | None = None, cache_dir: Path | None = None
+    ):
         self.dataset = dataset
         self.revision = revision
         self.hub = hub.rstrip("/")
@@ -49,12 +50,17 @@ class Ironflow:
         return dest
 
     def funding(self, months: Iterable[str]) -> pl.DataFrame:
-        parts = [pl.read_parquet(self.month(ym), columns=["timestamp", "market", "funding_rate", "premium"])
-                 for ym in months]
+        parts = [
+            pl.read_parquet(self.month(ym), columns=["timestamp", "market", "funding_rate", "premium"]) for ym in months
+        ]
         df = pl.concat(parts)
-        return (df.with_columns(pl.col("market").map_elements(normalize_market, return_dtype=pl.String),
-                                pl.col("timestamp").dt.replace_time_zone("UTC").dt.cast_time_unit("us"))
-                .rename({"timestamp": "time", "funding_rate": "funding"})
-                .select(["market", "time", "funding", "premium"])
-                .unique(["market", "time"], keep="first")
-                .sort(["market", "time"]))
+        return (
+            df.with_columns(
+                pl.col("market").map_elements(normalize_market, return_dtype=pl.String),
+                pl.col("timestamp").dt.replace_time_zone("UTC").dt.cast_time_unit("us"),
+            )
+            .rename({"timestamp": "time", "funding_rate": "funding"})
+            .select(["market", "time", "funding", "premium"])
+            .unique(["market", "time"], keep="first")
+            .sort(["market", "time"])
+        )

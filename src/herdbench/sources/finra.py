@@ -81,5 +81,7 @@ class Finra:
         text = r.content.decode("utf-8", errors="replace")
         if cached is not None:
             cached.parent.mkdir(parents=True, exist_ok=True)
-            cached.write_text(text, encoding="utf-8")
+            tmp = cached.with_name(cached.name + ".part")
+            tmp.write_text(text, encoding="utf-8")
+            tmp.replace(cached)
         return parse_short_interest(text)

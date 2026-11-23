@@ -20,8 +20,11 @@ def funding_server(n_rows: int, page: int = 500):
     def handle(body):
         assert body["type"] == "fundingHistory"
         start, end = body["startTime"], body.get("endTime", 10**15)
-        rows = [{"coin": body["coin"], "fundingRate": f"{i * 1e-6:.10f}", "premium": f"{-i * 1e-6:.10f}", "time": t}
-                for i, t in enumerate(stamps) if start <= t <= end][:page]
+        rows = [
+            {"coin": body["coin"], "fundingRate": f"{i * 1e-6:.10f}", "premium": f"{-i * 1e-6:.10f}", "time": t}
+            for i, t in enumerate(stamps)
+            if start <= t <= end
+        ][:page]
         return 200, rows
 
     return Routes(post={"/info": handle}), stamps
@@ -48,7 +51,7 @@ def test_funding_history_pages_through_without_gaps_or_duplicates():
 
 
 def test_funding_history_stops_at_the_end_time():
-    routes, stamps = funding_server(1_000)
+    routes, _stamps = funding_server(1_000)
     with serve(routes) as base:
         df = api(base).funding_history("BTC", T0, T0 + 9 * HOUR)
     assert len(df) == 10

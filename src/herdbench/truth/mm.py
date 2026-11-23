@@ -22,15 +22,18 @@ from herdbench.config import PREREG
 
 
 def daily_activity(fills: pl.DataFrame, day: date) -> pl.DataFrame:
-    f = (fills.filter(pl.col("asset_class") == "perp")
-         .with_columns(ntl=pl.col("price") * pl.col("size")))
-    return (f.group_by("address").agg(
-        maker_ntl=pl.col("ntl").filter(~pl.col("crossed")).sum(),
-        taker_ntl=pl.col("ntl").filter(pl.col("crossed")).sum(),
-        n_fills=pl.len().cast(pl.Int64))
+    f = fills.filter(pl.col("asset_class") == "perp").with_columns(ntl=pl.col("price") * pl.col("size"))
+    return (
+        f.group_by("address")
+        .agg(
+            maker_ntl=pl.col("ntl").filter(~pl.col("crossed")).sum(),
+            taker_ntl=pl.col("ntl").filter(pl.col("crossed")).sum(),
+            n_fills=pl.len().cast(pl.Int64),
+        )
         .with_columns(day=pl.lit(day))
         .select(["address", "day", "maker_ntl", "taker_ntl", "n_fills"])
-        .sort("address"))
+        .sort("address")
+    )
 
 
 def entity_activity(activity: pl.DataFrame, emap: dict[str, str]) -> pl.DataFrame:
@@ -40,22 +43,39 @@ def entity_activity(activity: pl.DataFrame, emap: dict[str, str]) -> pl.DataFram
         a = a.join(mapping, on="address", how="left").with_columns(entity=pl.coalesce("_entity", "address"))
     else:
         a = a.with_columns(entity=pl.col("address"))
-    return (a.group_by(["entity", "day"]).agg(maker_ntl=pl.col("maker_ntl").sum(), taker_ntl=pl.col("taker_ntl").sum())
-            .select(["entity", "day", "maker_ntl", "taker_ntl"]).sort(["entity", "day"]))
+    return (
+        a.group_by(["entity", "day"])
+        .agg(maker_ntl=pl.col("maker_ntl").sum(), taker_ntl=pl.col("taker_ntl").sum())
+        .select(["entity", "day", "maker_ntl", "taker_ntl"])
+        .sort(["entity", "day"])
+    )
 
 
-def market_makers(window_rows: pl.DataFrame, maker_share: float, min_notional: float, min_active_days: int,
-                  mean_gross: pl.DataFrame | None = None,
-                  turnover_multiple: float = PREREG.mm_turnover_multiple) -> set[str]:
-    g = (window_rows.group_by("entity").agg(
-        maker=pl.col("maker_ntl").sum(), taker=pl.col("taker_ntl").sum(), days=pl.col("day").n_unique())
-         .with_columns(total=pl.col("maker") + pl.col("taker")))
-    hit = g.filter((pl.col("total") > 0) & (pl.col("maker") / pl.col("total") >= maker_share)
-                   & (pl.col("total") >= min_notional) & (pl.col("days") >= min_active_days))
+def market_makers(
+    window_rows: pl.DataFrame,
+    maker_share: float,
+    min_notional: float,
+    min_active_days: int,
+    mean_gross: pl.DataFrame | None = None,
+    turnover_multiple: float = PREREG.mm_turnover_multiple,
+) -> set[str]:
+    g = (
+        window_rows.group_by("entity")
+        .agg(maker=pl.col("maker_ntl").sum(), taker=pl.col("taker_ntl").sum(), days=pl.col("day").n_unique())
+        .with_columns(total=pl.col("maker") + pl.col("taker"))
+    )
+    hit = g.filter(
+        (pl.col("total") > 0)
+        & (pl.col("maker") / pl.col("total") >= maker_share)
+        & (pl.col("total") >= min_notional)
+        & (pl.col("days") >= min_active_days)
+    )
     if mean_gross is not None:
-        hit = (hit.join(mean_gross.select(["entity", "mean_gross"]), on="entity", how="left")
-               .with_columns(_den=pl.max_horizontal(pl.col("mean_gross").fill_null(0.0), pl.lit(1.0)))
-               .filter(pl.col("total") >= turnover_multiple * pl.col("_den")))
+        hit = (
+            hit.join(mean_gross.select(["entity", "mean_gross"]), on="entity", how="left")
+            .with_columns(_den=pl.max_horizontal(pl.col("mean_gross").fill_null(0.0), pl.lit(1.0)))
+            .filter(pl.col("total") >= turnover_multiple * pl.col("_den"))
+        )
     return set(hit["entity"].to_list())
 
 
@@ -68,12 +88,19 @@ def mean_gross_in_window(gross: pl.DataFrame, snapshot_dates: Iterable[date], lo
     return g.with_columns(mean_gross=pl.col("total") / len(dates)).select(["entity", "mean_gross"])
 
 
-def set_for(activity: pl.DataFrame, available_days: Iterable[date], asof: date,
-            maker_share: float = PREREG.mm_maker_share, window_days: int = PREREG.mm_window_days,
-            min_fill_days: int = PREREG.mm_min_fill_days, min_notional: float = PREREG.mm_min_notional,
-            min_active_days: int = PREREG.mm_min_active_days, gross: pl.DataFrame | None = None,
-            snapshot_dates: Iterable[date] = (), turnover_multiple: float = PREREG.mm_turnover_multiple
-            ) -> set[str] | None:
+def set_for(
+    activity: pl.DataFrame,
+    available_days: Iterable[date],
+    asof: date,
+    maker_share: float = PREREG.mm_maker_share,
+    window_days: int = PREREG.mm_window_days,
+    min_fill_days: int = PREREG.mm_min_fill_days,
+    min_notional: float = PREREG.mm_min_notional,
+    min_active_days: int = PREREG.mm_min_active_days,
+    gross: pl.DataFrame | None = None,
+    snapshot_dates: Iterable[date] = (),
+    turnover_multiple: float = PREREG.mm_turnover_multiple,
+) -> set[str] | None:
     lo, hi = asof - timedelta(days=window_days), asof - timedelta(days=1)
     if sum(1 for d in set(available_days) if lo <= d <= hi) < min_fill_days:
         return None
@@ -82,6 +109,8 @@ def set_for(activity: pl.DataFrame, available_days: Iterable[date], asof: date,
     return market_makers(rows, maker_share, min_notional, min_active_days, mg, turnover_multiple)
 
 
-def carry_forward(known: dict[date, set[str]], asof: date, max_days: int = PREREG.mm_carry_forward_days) -> set[str] | None:
+def carry_forward(
+    known: dict[date, set[str]], asof: date, max_days: int = PREREG.mm_carry_forward_days
+) -> set[str] | None:
     past = [d for d in known if d <= asof and (asof - d).days <= max_days]
     return known[max(past)] if past else None
