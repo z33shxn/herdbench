@@ -1,0 +1,20 @@
+{
+ "source": "Source and owner of the short-interest data: FINRA. Summary statistics only; non-commercial use.",
+ "label": null,
+ "settlement": {
+  "power": 0.8395,
+  "power_threshold": 0.8,
+  "p_values_reported": true,
+  "n_stocks": 40,
+  "n_periods": 17,
+  "n_obs": 378
+ },
+ "publication": {
+  "power": 0.8365,
+  "power_threshold": 0.8,
+  "p_values_reported": true,
+  "n_stocks": 41,
+  "n_periods": 16,
+  "n_obs": 361
+ }
+}

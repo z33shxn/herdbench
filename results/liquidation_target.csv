@@ -1,0 +1,20 @@
+predictor,kind,target,variant,rho,se,p_value,n_days,partial_rho_rv,partial_se,partial_p,bh_flag,licence
+abs_premium_24h,proxy,liquidation intensity,registered,0.0189874,0.0305402,0.534128,99,0.0187559,0.0322839,0.561262,False,CC BY 4.0
+oi_change_7d,proxy,liquidation intensity,registered,-0.00559243,0.0251648,0.824133,99,-0.00908951,0.0231162,0.694165,False,CC BY 4.0
+comovement_30d,proxy,liquidation intensity,registered,0.159727,0.0236499,1.4398e-11,99,0.189018,0.0285893,3.80482e-11,True,CC BY 4.0
+liq_intensity_7d,proxy,liquidation intensity,registered,0.482755,0.0222665,3.11486e-104,99,0.489562,0.0181054,5.06223e-161,True,CC BY 4.0
+oi_to_volume_7d,proxy,liquidation intensity,registered,-0.429785,0.0341644,2.72291e-36,99,-0.440829,0.030378,1.02484e-47,True,CC BY 4.0
+abs_ni,truth,liquidation intensity,registered,0.0673754,0.0256233,0.00855196,99,0.0681881,0.026474,0.0100048,True,CC BY 4.0
+top10_share,truth,liquidation intensity,registered,0.192138,0.0132755,1.79239e-47,99,0.23248,0.0146399,8.72671e-57,True,CC BY 4.0
+fragile_share,truth,liquidation intensity,registered,0.471825,0.0204664,1.3523e-117,99,0.497781,0.024021,2.16169e-95,True,CC BY 4.0
+coheld_share,truth,liquidation intensity,registered,-0.166089,0.0266921,4.89593e-10,99,-0.165885,0.0249739,3.08781e-11,True,CC BY 4.0
+premium_24h,proxy,long minus short liquidations,registered,0.00941885,0.0172477,0.585003,99,,,,False,CC BY 4.0
+momentum_7d,proxy,long minus short liquidations,registered,-0.161521,0.0250728,1.17849e-10,99,,,,True,CC BY 4.0
+oi_flow_7d,proxy,long minus short liquidations,registered,-0.0143296,0.0133173,0.28192,99,,,,False,CC BY 4.0
+funding_24h,proxy,long minus short liquidations,registered,0.0155696,0.0160766,0.332812,99,,,,False,CC BY 4.0
+funding_7d,proxy,long minus short liquidations,registered,0.0339066,0.0191693,0.0769268,99,,,,False,CC BY 4.0
+ni,truth,long minus short liquidations,registered,0.0268468,0.0239203,0.261717,99,,,,False,CC BY 4.0
+ai,truth,long minus short liquidations,registered,-0.0443396,0.0189508,0.019298,99,,,,True,CC BY 4.0
+lwi,truth,long minus short liquidations,registered,0.0762261,0.0177169,1.68927e-05,99,,,,True,CC BY 4.0
+liq_intensity_7d,proxy,liquidation intensity,complete windows,0.485602,0.0390528,1.69801e-35,54,0.493085,0.0311049,1.35484e-56,,CC BY 4.0
+oi_to_volume_7d,proxy,liquidation intensity,complete windows,-0.449133,0.04992,2.31864e-19,54,-0.450874,0.0434883,3.47765e-25,,CC BY 4.0

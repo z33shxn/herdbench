@@ -1,0 +1,14 @@
+market,n_weeks,spearman,p_value,group,licence
+BTC,43,-0.103292,0.509807,managed money / leveraged funds,CC BY 4.0
+ETH,43,0.259136,0.0933477,managed money / leveraged funds,CC BY 4.0
+xyz:CL,31,-0.0657258,0.725372,managed money / leveraged funds,CC BY 4.0
+xyz:COPPER,30,-0.251168,0.180627,managed money / leveraged funds,CC BY 4.0
+xyz:EUR,31,0.137097,0.462073,managed money / leveraged funds,CC BY 4.0
+xyz:GOLD,33,0.314171,0.0749811,managed money / leveraged funds,CC BY 4.0
+xyz:JPY,29,0.0221675,0.909128,managed money / leveraged funds,CC BY 4.0
+xyz:NATGAS,26,-0.0290598,0.887934,managed money / leveraged funds,CC BY 4.0
+xyz:PALLADIUM,2,,,managed money / leveraged funds,CC BY 4.0
+xyz:PLATINUM,25,0.127692,0.543006,managed money / leveraged funds,CC BY 4.0
+xyz:SILVER,33,-0.114639,0.52526,managed money / leveraged funds,CC BY 4.0
+xyz:SP500,21,0.198701,0.387882,managed money / leveraged funds,CC BY 4.0
+xyz:XYZ100,37,0.211949,0.207904,managed money / leveraged funds,CC BY 4.0

@@ -1,0 +1,51 @@
+{
+ "herdbench_version": "1.0.0",
+ "built_at": "2026-11-23T15:31:48+00:00",
+ "mirror": {
+  "repo": "craftify2221/hyperliquid-fills-raw",
+  "revision": "de05dc101c819aa68accfefd6647b8bf6de02189",
+  "listing_sha256": "5423b7ac319ee8c6f055ecfc1d02f57647a7f91dd7e85b34ac8eef1b1fe79c95"
+ },
+ "funding": {
+  "dataset": "ironflow/hyperliquid-funding",
+  "revision": "b2153cf3aed73b6b200a378064538a2263923e9d"
+ },
+ "environment": {
+  "python": "3.13.5",
+  "polars": "2.1.0",
+  "pandas": "3.1.1",
+  "numpy": "2.5.5",
+  "scipy": "1.18.1",
+  "pyarrow": "26.0.1"
+ },
+ "preregistration_sha256": "ae32842f15e2e8b50b533be7da8220d36e43232c0fb0eac18e80a1c5d88253e1",
+ "addendum_sha256": "5cf5cbb72965ce7f6ab5a3e413da6cfd0c39a3b20a92c70a65514599f312c289",
+ "results_sha256": {
+  "binance/cross_venue.csv": "ce631cefe51ea39d67d2b9873c7031e30e6d2e822169dc165f5720ba5a072512",
+  "binance/directional_primary.csv": "fc40b71398ddea8eca9b1068577f14b5dd10a9314b50dcfc13d413c88df57886",
+  "binance/primary_family.csv": "64c8c90573cdece6ab66f5d072b43f8614b586de3658afb0bbe77307971568aa",
+  "binance/primary_family.json": "040271c1ccbc96c306c71ba2dcf5b555c7be1fd5bc00e29994ade6dc42e3a1e6",
+  "binance/robustness_cohorts.csv": "ec2f634d41c0689f6830e238685448fc07d5902d62d1629f2ccd40dd169879c8",
+  "binance/unsigned_primary.csv": "cd03107acce937349a1f9fe5c4413e0baeefd655bd824efdd9168149fa4878f8",
+  "cot_bridges.csv": "13b2c5c904b135d06f5a387bac605ecf9794aa0f2046ede87b5963df8066c8d1",
+  "cot_bridges_asset_managers.csv": "ef4f71cfe41d08d8c6705dac8e7397ecf5cb4bf75c1a9429d15c5c057a531ebb",
+  "directional_all_markets.csv": "ca5ff1261b506923aea0e9d9513fc09f37b777c3b11cf4120c40ff28577414c2",
+  "directional_primary.csv": "6c65a6bef2d4a41794e301c6d2a1a2754976d8a25a1f85f6473e25110ee71c1b",
+  "finra/transfer.json": "0157be5ab09165da27289f825738973244e905b7a659458475934489b0780440",
+  "finra/transfer_publication.csv": "b91310112bdf7d7d33f4c6bcdb7d4e0751dd116a45c9d3e4c514ffd7a06141f1",
+  "finra/transfer_settlement.csv": "9e9ba6723c19c785c3bc5d16268b5ba56e74666e71d2671139027e4460fc516e",
+  "funding_check.json": "e2f80d4fd0c5dd3a0d8f39b50acbeb8a34d689f9b05d681c187a037b05c45a2e",
+  "gates.json": "a1c6c0b900b96b123bd3178eb3a02611cecd00477d2b91e1177cbf2a83310b78",
+  "liquidation_delta_rho.json": "44a8bffc9f36735919cd807d85f20f1e4dba234fd6c7710e29390a43c3692bc5",
+  "liquidation_target.csv": "253dad158c79cc91e586925ecac2207932d40e3f1a5baef2eb3cbe7aa40d650d",
+  "positive_control.csv": "4cf45fa3c7ee6e95a367ada9973304592968038b461f93b6a16ecbf04ceb1848",
+  "proxies.parquet": "805f3e35d94ee9385d54aa37a3179cb364a981056503a956c8058c30ad3768f9",
+  "robustness_cohorts.csv": "eb9b547256429a04c6a56690dad9bba89397724e8b49dd569e0db3ebcde4eb4a",
+  "score_summary.json": "5593efce76f9f0fef1fc2b44ec3209e009fb1ab00a692ab152cdfa0dd287efdb",
+  "sensitivity_complete_flows.csv": "b5566c1ec15958f2e70ce39c36c88adfa6fa77c0ec5d5a1df993311bcd1a9497",
+  "truth_panel.parquet": "8a2ade22f792459618d0fbbed0dbcaea3fb27cf00743c06ee23a37f98503999f",
+  "truth_panel_summary.json": "702c139e9ae68d4233c66efa75fa1cfa881ee85df2d9b724a7868d5a9557e898",
+  "unsigned_all_markets.csv": "979d570ae1b7611a6d1fe4d79bcd050064c44b4d8fbd0d649a2776ca049055a0",
+  "unsigned_primary.csv": "169456accdc9b6ef2ca885a340ccd91d7f8f10d9e61430b571b2925a837d9fd7"
+ }
+}

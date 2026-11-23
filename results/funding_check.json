@@ -1,0 +1,60 @@
+{
+ "dataset": "ironflow/hyperliquid-funding",
+ "revision": "b2153cf3aed73b6b200a378064538a2263923e9d",
+ "reference": "Hyperliquid info API, fundingHistory",
+ "hours_compared": 240,
+ "hours_equal": 240,
+ "share_equal": 1.0,
+ "markets": [
+  {
+   "market": "BTC",
+   "window_start": "2026-04-26T00:00:00+00:00",
+   "hours_ironflow": 48,
+   "hours_api": 48,
+   "hours_compared": 48,
+   "hours_equal": 48,
+   "max_abs_diff_funding": 0.0,
+   "max_abs_diff_premium": 0.0
+  },
+  {
+   "market": "ETH",
+   "window_start": "2025-11-19T00:00:00+00:00",
+   "hours_ironflow": 48,
+   "hours_api": 48,
+   "hours_compared": 48,
+   "hours_equal": 48,
+   "max_abs_diff_funding": 0.0,
+   "max_abs_diff_premium": 0.0
+  },
+  {
+   "market": "SOL",
+   "window_start": "2025-10-27T00:00:00+00:00",
+   "hours_ironflow": 48,
+   "hours_api": 48,
+   "hours_compared": 48,
+   "hours_equal": 48,
+   "max_abs_diff_funding": 0.0,
+   "max_abs_diff_premium": 0.0
+  },
+  {
+   "market": "HYPE",
+   "window_start": "2026-06-03T00:00:00+00:00",
+   "hours_ironflow": 48,
+   "hours_api": 48,
+   "hours_compared": 48,
+   "hours_equal": 48,
+   "max_abs_diff_funding": 0.0,
+   "max_abs_diff_premium": 0.0
+  },
+  {
+   "market": "xyz:NVDA",
+   "window_start": "2025-11-25T00:00:00+00:00",
+   "hours_ironflow": 48,
+   "hours_api": 48,
+   "hours_compared": 48,
+   "hours_equal": 48,
+   "max_abs_diff_funding": 0.0,
+   "max_abs_diff_premium": 0.0
+  }
+ ]
+}

@@ -1,0 +1,7 @@
+market,n_weeks,spearman,p_value,group,licence
+BTC,43,0.0607067,0.698973,asset managers,CC BY 4.0
+ETH,43,-0.194503,0.211359,asset managers,CC BY 4.0
+xyz:EUR,31,-0.0153226,0.934797,asset managers,CC BY 4.0
+xyz:JPY,29,-0.434483,0.0185137,asset managers,CC BY 4.0
+xyz:SP500,21,-0.325974,0.149283,asset managers,CC BY 4.0
+xyz:XYZ100,37,0.252015,0.132391,asset managers,CC BY 4.0

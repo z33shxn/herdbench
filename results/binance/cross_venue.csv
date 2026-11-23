@@ -1,0 +1,4 @@
+panel,proxy,truth,cohort,z,rho,ci_low,ci_high,p_value,n_markets,n_obs,block_length,changes_rho,xs_rho,xs_se,xs_p,xs_days,oi_weighted_rho,placebo_rho,fe_beta,fe_se,expected_sign,sign_agreement,sign_low,sign_high,tail_lift,bh_flag,licence
+primary,bn_global_ls,ai,all,0.364139,0.348855,0.262772,0.446012,0.0009995,30,8566,28,0.246815,0.19688,0.0216313,8.89817e-20,297,0.0564896,-0.0402357,0.25949,0.0675462,1,0.585679,0.575208,0.596073,1.9752,True,CC BY-NC-SA 4.0
+primary,bn_top_account_ls,ai,top_av,0.231009,0.226985,0.115828,0.341464,0.0069965,30,8566,27,0.127986,0.151448,0.020726,2.72886e-13,297,-0.256904,0.00799381,0.14791,0.0672552,1,0.44408,0.433575,0.454636,1.55998,True,CC BY-NC-SA 4.0
+primary,bn_top_position_ls,ni,top_av,-0.0608965,-0.0608213,-0.171194,0.0344967,0.216892,30,8566,28,-0.00772776,0.111802,0.0264671,2.39799e-05,297,-0.216245,0.0644413,0.026172,0.0115127,1,0.439412,0.428931,0.449947,0.790081,False,CC BY-NC-SA 4.0

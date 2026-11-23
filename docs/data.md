@@ -225,7 +225,9 @@ No result is reported on this page; for the published numbers, see [docs/results
   the same notes.
 - The split is mechanical (`write_split` in `src/herdbench/pipeline.py`): a statistics row whose proxy name starts
   with `bn_` goes to `results/binance/`, every other row to `results/`. The primary family is written to
-  `results/binance/` as a whole. Tests check that no `bn_` row reaches an open-licence file.
+  `results/binance/` as a whole. Tests check that no `bn_` row reaches an open-licence file. Native rows on the
+  primary panel are scored on the confirmatory family's market-days, so which days they use depends on when Binance
+  data exist; no Binance value enters them, and they are published with the native statistics.
 - In the repository, the two Parquet files are stored once, in `src/herdbench/data/`, where the package loads them;
   `results/manifest.json` lists their SHA-256 with every other published file. The package's Apache-2.0 licence
   covers its code; the data files bundled with it remain CC BY 4.0.

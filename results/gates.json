@@ -1,0 +1,58 @@
+{
+ "gate0": {
+  "market_days": 88711,
+  "share_balanced": 1.0,
+  "max_gap": 0.0,
+  "threshold": 0.99,
+  "passed": true
+ },
+ "reconciliation": {
+  "pairs": 261,
+  "reconciled_share": 0.9950225465835328,
+  "market_maker_share": 0.9912824180071932,
+  "rest_share": 0.9952809747287423,
+  "worst_pair_share": 0.33599127058129497,
+  "threshold": 0.99,
+  "passed": true,
+  "pairs_below_threshold": [
+   {
+    "date": "2026-05-23",
+    "reconciled_share": 0.33599127058129497
+   },
+   {
+    "date": "2026-07-17",
+    "reconciled_share": 0.6530091117822071
+   }
+  ]
+ },
+ "kill_criterion_1": {
+  "count": 21,
+  "qualifying": [
+   "xyz:AAPL",
+   "xyz:AMD",
+   "xyz:AMZN",
+   "xyz:COIN",
+   "xyz:CRCL",
+   "xyz:CRWV",
+   "xyz:GOOGL",
+   "xyz:HOOD",
+   "xyz:INTC",
+   "xyz:META",
+   "xyz:MSFT",
+   "xyz:MSTR",
+   "xyz:MU",
+   "xyz:NFLX",
+   "xyz:NVDA",
+   "xyz:ORCL",
+   "xyz:PLTR",
+   "xyz:RIVN",
+   "xyz:SNDK",
+   "xyz:TSLA",
+   "xyz:USAR"
+  ],
+  "threshold": 25,
+  "passed": false,
+  "gating": false
+ },
+ "label": null
+}

@@ -1,0 +1,25 @@
+{
+ "licence": "CC BY 4.0",
+ "label": null,
+ "markets": 101,
+ "comparisons": [
+  {
+   "picked_on": "first",
+   "scored_on": "second",
+   "proxy": "liq_intensity_7d",
+   "delta": -0.03583163783052144,
+   "ci_low": -0.10186696968715188,
+   "ci_high": 0.031543906148986355,
+   "n_days": 50
+  },
+  {
+   "picked_on": "second",
+   "scored_on": "first",
+   "proxy": "liq_intensity_7d",
+   "delta": 0.014480634448631312,
+   "ci_low": -0.02575586358150969,
+   "ci_high": 0.06130688756138696,
+   "n_days": 49
+  }
+ ]
+}

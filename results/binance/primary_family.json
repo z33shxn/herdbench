@@ -1,0 +1,295 @@
+{
+ "note": "Contains statistics derived from Binance Vision data (https://data.binance.vision), licensed CC BY-NC-SA 4.0; shared under the same licence.",
+ "licence": "CC BY-NC-SA 4.0",
+ "label": null,
+ "truth": "ni(non_mm)",
+ "markets": [
+  "AAVE",
+  "ADA",
+  "ARB",
+  "AVAX",
+  "BNB",
+  "BTC",
+  "CRV",
+  "DOGE",
+  "ENA",
+  "ETH",
+  "FARTCOIN",
+  "HYPE",
+  "IP",
+  "LDO",
+  "LINK",
+  "LTC",
+  "PENGU",
+  "PUMP",
+  "SOL",
+  "SUI",
+  "TON",
+  "TRUMP",
+  "TRX",
+  "WLD",
+  "WLFI",
+  "XPL",
+  "XRP",
+  "ZORA",
+  "kBONK",
+  "kPEPE"
+ ],
+ "n_common_days": 297,
+ "block_length": 22,
+ "half_split": "2026-03-23",
+ "halves": {
+  "premium_24h": {
+   "first_z": 0.3051908254869165,
+   "second_z": 0.41913142855282465
+  },
+  "momentum_7d": {
+   "first_z": 0.18062498317144018,
+   "second_z": 0.14172178408022568
+  },
+  "oi_flow_7d": {
+   "first_z": -0.03538293659935129,
+   "second_z": 0.015574705766944683
+  },
+  "bn_global_ls": {
+   "first_z": -0.08551478030862916,
+   "second_z": 0.13551513744056837
+  },
+  "bn_top_account_ls": {
+   "first_z": -0.04026777182148792,
+   "second_z": 0.1461876861987878
+  },
+  "bn_top_position_ls": {
+   "first_z": 0.04934194328259792,
+   "second_z": 0.10486668164797407
+  },
+  "bn_taker_ls": {
+   "first_z": 0.025484628173075206,
+   "second_z": 0.03782698577756749
+  }
+ },
+ "stability": {
+  "decisive": [
+   "premium_24h",
+   "momentum_7d"
+  ],
+  "tau": null,
+  "ranking_claimed": false,
+  "unstable": [],
+  "passed": null
+ },
+ "outranks": {
+  "premium_24h": {
+   "premium_24h": 0.0,
+   "momentum_7d": 1.0,
+   "oi_flow_7d": 1.0,
+   "bn_global_ls": 1.0,
+   "bn_top_account_ls": 1.0,
+   "bn_top_position_ls": 1.0,
+   "bn_taker_ls": 1.0
+  },
+  "momentum_7d": {
+   "premium_24h": 0.0,
+   "momentum_7d": 0.0,
+   "oi_flow_7d": 0.9955,
+   "bn_global_ls": 0.9835,
+   "bn_top_account_ls": 0.9445,
+   "bn_top_position_ls": 0.8125,
+   "bn_taker_ls": 0.9985
+  },
+  "oi_flow_7d": {
+   "premium_24h": 0.0,
+   "momentum_7d": 0.0045,
+   "oi_flow_7d": 0.0,
+   "bn_global_ls": 0.3915,
+   "bn_top_account_ls": 0.285,
+   "bn_top_position_ls": 0.131,
+   "bn_taker_ls": 0.4785
+  },
+  "bn_global_ls": {
+   "premium_24h": 0.0,
+   "momentum_7d": 0.0165,
+   "oi_flow_7d": 0.6085,
+   "bn_global_ls": 0.0,
+   "bn_top_account_ls": 0.1985,
+   "bn_top_position_ls": 0.164,
+   "bn_taker_ls": 0.639
+  },
+  "bn_top_account_ls": {
+   "premium_24h": 0.0,
+   "momentum_7d": 0.0555,
+   "oi_flow_7d": 0.715,
+   "bn_global_ls": 0.8015,
+   "bn_top_account_ls": 0.0,
+   "bn_top_position_ls": 0.2575,
+   "bn_taker_ls": 0.7705
+  },
+  "bn_top_position_ls": {
+   "premium_24h": 0.0,
+   "momentum_7d": 0.1875,
+   "oi_flow_7d": 0.869,
+   "bn_global_ls": 0.836,
+   "bn_top_account_ls": 0.7425,
+   "bn_top_position_ls": 0.0,
+   "bn_taker_ls": 0.901
+  },
+  "bn_taker_ls": {
+   "premium_24h": 0.0,
+   "momentum_7d": 0.0015,
+   "oi_flow_7d": 0.5215,
+   "bn_global_ls": 0.361,
+   "bn_top_account_ls": 0.2295,
+   "bn_top_position_ls": 0.099,
+   "bn_taker_ls": 0.0
+  }
+ },
+ "dominance_claims": [],
+ "published_panel_rerun": {
+  "table": [
+   {
+    "proxy": "premium_24h",
+    "z": 0.3011861107564847,
+    "rho": 0.2923976908107542,
+    "n_markets": 30,
+    "n_obs": 8506,
+    "ci_low": 0.22196572704067782,
+    "ci_high": 0.4014618343595508,
+    "ci90_low": 0.23225939163828005,
+    "ci90_high": 0.384333484380147,
+    "p_value": 0.0009995002498750624,
+    "rot95": 0.12352111652758709,
+    "fe_beta": 38.04901988129286,
+    "fe_se": 7.057581875582976,
+    "p_holm": 0.0069965017491254375,
+    "verdict": "confirmed",
+    "rank": 1,
+    "rank_lo": 1,
+    "rank_hi": 1
+   },
+   {
+    "proxy": "momentum_7d",
+    "z": 0.13483171122297138,
+    "rho": 0.13402054760286908,
+    "n_markets": 30,
+    "n_obs": 8506,
+    "ci_low": 0.07224187440708263,
+    "ci_high": 0.20907279567528125,
+    "ci90_low": 0.08382156166312704,
+    "ci90_high": 0.19866381069695463,
+    "p_value": 0.00399800099950025,
+    "rot95": 0.08070683383425116,
+    "fe_beta": 0.0006608431035497134,
+    "fe_se": 0.02194527657963967,
+    "p_holm": 0.0239880059970015,
+    "verdict": "confirmed",
+    "rank": 2,
+    "rank_lo": 2,
+    "rank_hi": 4
+   },
+   {
+    "proxy": "oi_flow_7d",
+    "z": -0.025459110424293153,
+    "rho": -0.025453611270869612,
+    "n_markets": 30,
+    "n_obs": 8506,
+    "ci_low": -0.07415118297645569,
+    "ci_high": 0.028529026850323266,
+    "ci90_low": -0.06886519880109249,
+    "ci90_high": 0.0197012405117122,
+    "p_value": 0.367816091954023,
+    "rot95": 0.04871474098165932,
+    "fe_beta": -0.007682089972590831,
+    "fe_se": 0.0061030706412212015,
+    "p_holm": 0.735632183908046,
+    "verdict": "uninformative",
+    "rank": 6,
+    "rank_lo": 3,
+    "rank_hi": 7
+   },
+   {
+    "proxy": "bn_global_ls",
+    "z": 0.02469922342735352,
+    "rho": 0.02469420205210022,
+    "n_markets": 30,
+    "n_obs": 8506,
+    "ci_low": -0.07894810458223153,
+    "ci_high": 0.12828048439134349,
+    "ci90_low": -0.06270811157877078,
+    "ci90_high": 0.1141957985775571,
+    "p_value": 0.6406796601699151,
+    "rot95": 0.05488113314741348,
+    "fe_beta": 0.018532659329429935,
+    "fe_se": 0.008591411592699225,
+    "p_holm": 0.735632183908046,
+    "verdict": "inconclusive",
+    "rank": 7,
+    "rank_lo": 3,
+    "rank_hi": 7
+   },
+   {
+    "proxy": "bn_top_account_ls",
+    "z": 0.06283159315220667,
+    "rho": 0.0627490411312406,
+    "n_markets": 30,
+    "n_obs": 8506,
+    "ci_low": -0.033476853563700726,
+    "ci_high": 0.1571365024811465,
+    "ci90_low": -0.021990431968093194,
+    "ci90_high": 0.14579404916216004,
+    "p_value": 0.2108945527236382,
+    "rot95": 0.06378015793545175,
+    "fe_beta": 0.021025578983753134,
+    "fe_se": 0.008672604151493336,
+    "p_holm": 0.6326836581709145,
+    "verdict": "inconclusive",
+    "rank": 4,
+    "rank_lo": 3,
+    "rank_hi": 7
+   },
+   {
+    "proxy": "bn_top_position_ls",
+    "z": 0.0955589898686635,
+    "rho": 0.09526918208387615,
+    "n_markets": 30,
+    "n_obs": 8506,
+    "ci_low": -0.001968543088349691,
+    "ci_high": 0.178596671654111,
+    "ci90_low": 0.011645947669563892,
+    "ci90_high": 0.16564544265664477,
+    "p_value": 0.05997001499250375,
+    "rot95": 0.11007316000111084,
+    "fe_beta": 0.03623159308612613,
+    "fe_se": 0.0075014385091020696,
+    "p_holm": 0.26486756621689156,
+    "verdict": "inconclusive",
+    "rank": 3,
+    "rank_lo": 2,
+    "rank_hi": 7
+   },
+   {
+    "proxy": "bn_taker_ls",
+    "z": 0.027264860704348224,
+    "rho": 0.027258106728900205,
+    "n_markets": 30,
+    "n_obs": 8506,
+    "ci_low": -0.00023925379951486694,
+    "ci_high": 0.060940437775699005,
+    "ci90_low": 0.0041900654773196115,
+    "ci90_high": 0.055805953618631145,
+    "p_value": 0.05297351324337831,
+    "rot95": 0.05012016753374021,
+    "fe_beta": -0.017381146016692314,
+    "fe_se": 0.013659752351133668,
+    "p_holm": 0.26486756621689156,
+    "verdict": "uninformative",
+    "rank": 5,
+    "rank_lo": 4,
+    "rank_hi": 7
+   }
+  ],
+  "n_common_days": 297,
+  "flag": "representative",
+  "primary_suppressed_share": 0.006830601092896175,
+  "label": "in-sample, published panel"
+ }
+}

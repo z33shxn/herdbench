@@ -1,0 +1,8 @@
+proxy,n_stocks,n_obs,power,expected_sign,beta,se,ci_low,ci_high,p_value,se_twoway,direction_as_expected,source
+si_change_pct,41,361,0.8365,-1,-0.0422339,0.055565,-0.154535,0.0700671,0.451663,0.0583832,True,Source and owner of the short-interest data: FINRA. Summary statistics only; non-commercial use.
+days_to_cover,41,361,0.8365,-1,0.0857577,0.0568261,-0.0290922,0.200608,0.139126,0.066258,False,Source and owner of the short-interest data: FINRA. Summary statistics only; non-commercial use.
+log_short_interest,41,361,0.8365,-1,-0.00437369,0.0376608,-0.080489,0.0717416,0.908127,0.0370821,True,Source and owner of the short-interest data: FINRA. Summary statistics only; non-commercial use.
+funding_period,41,361,0.8365,1,-0.0307491,0.0385359,-0.108633,0.0471348,0.42962,0.0485881,False,Source and owner of the short-interest data: FINRA. Summary statistics only; non-commercial use.
+premium_period,41,361,0.8365,1,-0.0217749,0.043218,-0.109122,0.0655719,0.617138,0.0535138,False,Source and owner of the short-interest data: FINRA. Summary statistics only; non-commercial use.
+momentum_period,40,351,0.8365,1,0.0756449,0.0668845,-0.0596417,0.210932,0.264971,0.0695627,True,Source and owner of the short-interest data: FINRA. Summary statistics only; non-commercial use.
+comovement_30d,40,346,0.8365,1,0.0424975,0.0464238,-0.0514035,0.136398,0.365595,0.0346823,True,Source and owner of the short-interest data: FINRA. Summary statistics only; non-commercial use.

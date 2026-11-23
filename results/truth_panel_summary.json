@@ -1,0 +1,45 @@
+{
+ "dates": 305,
+ "first_date": "2025-08-28",
+ "last_date": "2026-08-18",
+ "markets": 404,
+ "eligible_markets": 300,
+ "cells": 413468,
+ "eligible_cells": 184938,
+ "eligible_suppressed_share": 0.21611567119791497,
+ "per_cohort": {
+  "all": {
+   "cells": 37190,
+   "suppressed_share": 0.8755310567356817
+  },
+  "contrarian": {
+   "cells": 37005,
+   "suppressed_share": 0.08161059316308607
+  },
+  "non_mm": {
+   "cells": 37190,
+   "suppressed_share": 0.011642914762032804
+  },
+  "top_av": {
+   "cells": 36549,
+   "suppressed_share": 0.031628772333032365
+  },
+  "trend": {
+   "cells": 37004,
+   "suppressed_share": 0.07561344719489785
+  }
+ },
+ "primary_market_days": 8784,
+ "primary_suppressed_share": 0.006830601092896175,
+ "primary_suppressed_oi_share": 0.0012119263580116849,
+ "published_panel_flag": "representative",
+ "label": null,
+ "published_rows": 260121,
+ "entity_map": {
+  "targets": 4655,
+  "addresses_mapped": 5503,
+  "entities_with_several_addresses": 1041,
+  "largest_entity_addresses": 81,
+  "map_sha256": "7819fda8b61fa9b668acbf50de000aa0640b22c7d42d57b43dc8b28658bbcac7"
+ }
+}

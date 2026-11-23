@@ -14,7 +14,46 @@ panel, every result and the means to reproduce them are in this repository.
 ![Results: CC BY 4.0](https://img.shields.io/badge/results-CC%20BY%204.0-lightgrey)
 [![Pre-registered](https://img.shields.io/badge/pre--registered-18%20Nov%202026-success)](docs/preregistration.md)
 
-<!-- RESULTS:HEADLINE -->
+## Headline results
+
+Registered study, 30 primary markets, 297 snapshot dates (28 August 2025 to 18 August 2026), 8,566 market-days.
+Truth: net positioning of the crowd without market makers, ni(non_mm). Within-market Spearman correlation over time,
+averaged across markets, with a 95% block-bootstrap interval; seven proxies Holm-corrected together.
+
+| Proxy | ρ [95% interval] | Verdict |
+|---|---|---|
+| `premium_24h` (perp premium over the oracle, last 24 hours) | 0.295 [0.223, 0.402] | **confirmed** |
+| `momentum_7d` (7-day return) | 0.136 [0.073, 0.211] | **confirmed** |
+| `bn_top_position_ls` (Binance top-trader position ratio) | 0.094 [−0.000, 0.175] | inconclusive |
+| `bn_top_account_ls` (Binance top-trader account ratio) | 0.064 [−0.027, 0.160] | inconclusive |
+| `bn_global_ls` (Binance global account ratio) | 0.026 [−0.074, 0.137] | inconclusive |
+| `bn_taker_ls` (Binance taker buy/sell volume) | 0.025 [−0.001, 0.058] | uninformative |
+| `oi_flow_7d` (open-interest change signed by momentum) | −0.024 [−0.074, 0.030] | uninformative |
+
+What this means for anyone who reads positioning from public data:
+
+* **The premium is the best public read of where the crowd is net positioned.** Funding is the premium clamped to an
+  interest rate and sat on its floor in 57% of hours; it scores the same (0.295), so the premium carries the
+  information without the clamp.
+* **The crowd adds to winners.** Seven-day momentum tracks net positioning weakly but reliably, and the positive
+  control (momentum against trend followers) comes out above zero as it must.
+* **Exchange long/short ratios count accounts, not money.** No Binance ratio tracks net positioning, but the global
+  ratio does track the share of accounts that are long (0.349 [0.263, 0.446] against ai(all)). The top-trader
+  position ratio does not track the largest accounts' net positioning (−0.061 [−0.171, 0.034]).
+* **Open-interest and taker-flow signals are uninformative** about net positioning: their 90% intervals lie inside
+  ±0.10.
+* **Observed fragility predicts liquidations, but not better than past liquidations.** The share of positions within
+  10% of their liquidation price predicts next week's liquidations across markets (ρ = 0.47; 0.50 controlling for
+  volatility), and out of sample it does no better than last week's liquidations.
+* **US single-stock perps:** equity short interest agrees only weakly with perp positioning (settlement-date short
+  interest, β = −0.08, p = 0.049; nothing at publication). With 14 tests, read this as weak evidence.
+
+Both confirmed proxies stay clear of zero under every alternative market-maker rule (premium 0.20 to 0.39, momentum
+0.13 to 0.19), and the published panel alone gives the same verdicts. Only two verdicts are decisive, so no ranking
+beyond them is claimed. Integrity gates: snapshots reconcile with the fills between them on
+99.5% of changed notional (the shortfall sits in two snapshot pairs with holes in the source archive), and maker
+notional equals taker notional on 100% of 88,711 market-days. Every table and figure:
+[docs/results.md](docs/results.md).
 
 ## Why a benchmark like this did not exist
 

@@ -1,0 +1,3 @@
+panel,proxy,truth,cohort,z,rho,ci_low,ci_high,p_value,n_markets,n_obs,block_length,changes_rho,xs_rho,xs_se,xs_p,xs_days,oi_weighted_rho,placebo_rho,fe_beta,fe_se,expected_sign,sign_agreement,sign_low,sign_high,tail_lift,bh_flag,licence
+primary,momentum_7d,ni,trend,0.131757,0.131,0.0404934,0.218378,0.0049975,30,8566,20,0.020907,0.13389,0.022215,1.67009e-09,297,0.185575,0.0253662,0.420962,0.100499,1,0.556684,0.54614,0.567177,1.30046,True,CC BY 4.0
+all_markets,momentum_7d,ni,trend,0.157995,0.156693,0.0998928,0.217238,0.0009995,100,23421,20,0.0307379,0.142965,0.0126847,1.83227e-29,302,0.194456,0.0225677,0.491108,0.071085,1,0.562873,0.556518,0.569207,1.48994,True,CC BY 4.0
