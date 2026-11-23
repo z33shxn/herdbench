@@ -190,13 +190,9 @@ def forest(
             for text in leg.get_texts():
                 text.set_color(c["ink2"])
         fig.tight_layout()
-        fig.savefig(
-            stem.with_name(f"{stem.name}-{mode}.svg"),
-            format="svg",
-            facecolor=c["surface"],
-            metadata={"Date": None},
-            bbox_inches="tight",
-        )
+        out = stem.with_name(f"{stem.name}-{mode}.svg")
+        fig.savefig(out, format="svg", facecolor=c["surface"], metadata={"Date": None}, bbox_inches="tight")
+        out.write_bytes(out.read_bytes().replace(b"\r\n", b"\n"))  # LF on every platform, like every other output
         plt.close(fig)
     rel = f"figures/{stem.name}"
     return (

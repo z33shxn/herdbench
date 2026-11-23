@@ -41,6 +41,7 @@ def test_figures_are_byte_for_byte_reproducible(built, tmp_path):
     report.render(built["paths"].results, figures=b)
     for f in a.iterdir():
         assert (b / f.name).read_bytes() == f.read_bytes(), f.name
+        assert b"\r\n" not in f.read_bytes(), f.name
 
 
 def test_formatting_helpers():
