@@ -1,0 +1,5 @@
+HerdBench pre-analysis addendum, version 1
+commit a77b84d2f515d5c394986df3163a5772c0b4f1a9
+sha256(docs/preregistration_addendum.md) 5cf5cbb72965ce7f6ab5a3e413da6cfd0c39a3b20a92c70a65514599f312c289
+entity map sha256 7819fda8b61fa9b668acbf50de000aa0640b22c7d42d57b43dc8b28658bbcac7
+recorded 2026-11-23, after the truth panel and gates were built and before any proxy-versus-truth statistic was computed
