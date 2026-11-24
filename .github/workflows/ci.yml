@@ -38,8 +38,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest]
         python: ["3.10", "3.11", "3.12", "3.13"]
+        # One macOS job: GitHub's hosted macOS runners are capacity-limited, and jobs left waiting for one are
+        # cancelled, which fails the run. Linux and Windows cover the full Python range.
+        include:
+          - os: macos-latest
+            python: "3.12"
     steps:
       - uses: actions/checkout@v4
         with:

@@ -303,7 +303,7 @@ Rebuilding every number from public data: [docs/reproduce.md](docs/reproduce.md)
   whether you reproduced the registered entity map). `herdbench check` cross-checks the funding inputs against the
   venue's own API, and [`results/manifest.json`](results/manifest.json) holds the SHA-256 of every published file.
   The test suite builds a complete synthetic archive and runs the whole pipeline offline on Linux, Windows and
-  macOS, Python 3.10 to 3.13. Details: [docs/reproduce.md](docs/reproduce.md).
+  macOS (Python 3.10 to 3.13 on Linux and Windows, 3.12 on macOS). Details: [docs/reproduce.md](docs/reproduce.md).
 * **No hand-made charts.** Every chart on this page is drawn by `herdbench visuals` from `results/`, the truth panel
   and the timestamp record, and a test fails if an image drifts from them
   ([how the images are made](docs/visuals/README.md)).

@@ -36,7 +36,7 @@ pytest
 | `ruff check src tests` | Lint rules configured in `pyproject.toml` (line length 120, Python 3.10 target) |
 | `ruff format --check src tests` | Formatting; `ruff format src tests` applies it |
 | `mypy` | Type checks of `src/herdbench` with the settings in `pyproject.toml`, including `check_untyped_defs` |
-| `pytest` | The offline test suite; CI runs it on Linux, Windows and macOS with Python 3.10 to 3.13 |
+| `pytest` | The offline test suite; CI runs it with Python 3.10 to 3.13 on Linux and Windows, and 3.12 on macOS |
 
 The test suite needs no network. It writes a complete synthetic archive (snapshots, fills, funding, Binance
 Vision, FINRA and CFTC files in their real formats) and runs the pipeline on it, from the truth panel to the

@@ -37,7 +37,7 @@ output against `results/manifest.json`.
 
 | Item | Requirement |
 |---|---|
-| Python | 3.10 or later. CI tests 3.10 to 3.13 on Linux, Windows and macOS. |
+| Python | 3.10 or later. CI tests 3.10 to 3.13 on Linux and Windows, and 3.12 on macOS. |
 | Disk | About 25 GB for the raw inputs, plus room for the intermediate tables in `derived/`. |
 | Memory | About 8 GB of RAM. |
 | Network | Needed only by `herdbench fetch`, `herdbench build entities` and the optional `herdbench build panel-selection`. Hosts: `huggingface.co` (and the download hosts it redirects to), `api.hyperliquid.xyz`, `data.binance.vision`, `cdn.finra.org`, `publicreporting.cftc.gov`. |
@@ -409,7 +409,7 @@ pytest
   on 127.0.0.1 that behaves like the real hosts.
 - `pytest` deselects tests marked `network` (`-m 'not network'` in `pyproject.toml`). `pytest -m network` selects
   them.
-- The suite takes about two minutes. CI runs it on Linux, Windows and macOS with Python 3.10 to 3.13.
+- The suite takes about two minutes. CI runs it with Python 3.10 to 3.13 on Linux and Windows, and 3.12 on macOS.
 
 ## Troubleshooting
 

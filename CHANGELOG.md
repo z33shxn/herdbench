@@ -9,6 +9,11 @@ design are listed in [docs/deviations.md](docs/deviations.md).
 
 ## [Unreleased]
 
+### Changed
+
+- CI tests macOS on Python 3.12 only. GitHub's hosted macOS runners are capacity-limited, and two runs in a row
+  lost three macOS jobs that never got a runner; Linux and Windows still cover Python 3.10 to 3.13.
+
 ## [1.1.2] - 2026-11-24
 
 ### Changed
