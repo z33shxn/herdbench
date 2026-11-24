@@ -9,6 +9,29 @@ design are listed in [docs/deviations.md](docs/deviations.md).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-24
+
+Presentation only: no analysis parameter, statistic or published result changed.
+
+### Added
+
+- `herdbench visuals` and `herdbench.visuals`: the README images (hero, how it works, scorecard, insights and
+  timeline), drawn from `results/` and the bundled truth panel as animated SVG in light and dark versions. They
+  carry no script and no outside resource, and they stop moving for readers who ask for reduced motion.
+  `tests/test_visuals.py` fails if the committed images in `docs/visuals/` differ from what the command draws.
+- Tests that no tracked text file holds an en or em dash or a Unicode minus sign, that no image holds an
+  underscore, and that the registered documents differ from their timestamped versions only in those characters.
+
+### Changed
+
+- The README now explains the study in plain words first, with the full statistical detail below.
+- Report figures use display names (for example "Premium, 24h") and ASCII minus signs; report tables show `n/a`
+  for a missing value and rank intervals as `[low, high]`.
+- House style: en dashes and Unicode minus signs became ASCII hyphens across the repository, including the
+  working-tree copy of `docs/preregistration.md`. The registered version stays in git at `f205501`, with its hash
+  in `docs/timestamps/prereg-v1.txt`; see `docs/timestamps/README.md`.
+- CI checks out the full history, so the typography test can compare against the registered commits.
+
 ## [1.0.0] - 2026-11-19
 
 First release. The design was registered on 2026-11-18, before any proxy was compared with the truth.
@@ -57,7 +80,7 @@ Results: see [docs/results.md](docs/results.md).
   share (0.7, 0.9) and the turnover multiple (20, 100).
 - Cohorts: `all`; `non_mm`, the primary crowd; and, inside `non_mm`, `top_av` (top 20% by account value at the
   latest snapshot 8 to 14 days earlier), `trend` and `contrarian` (30-day trend score of at least +0.20 or at
-  most −0.20, from at least 5 position changes).
+  most -0.20, from at least 5 position changes).
 - Truth metrics per snapshot date, market and cohort: `ni`, `ai` and `lwi` (signed); `abs_ni`, `top10_share`,
   `fragile_share` and `coheld_share` (unsigned); and `dtl`, days to liquidate, which is published but never
   scored.
@@ -84,14 +107,14 @@ Results: see [docs/results.md](docs/results.md).
 
 - The primary statistic: the within-market Spearman correlation over time, averaged across markets on Fisher's
   z scale, with a circular block bootstrap whose date draws are shared by all proxies. The block length is the
-  median Politis–White estimate across the panel's series, clipped to 20 to 40 days.
+  median Politis-White estimate across the panel's series, clipped to 20 to 40 days.
 - The primary family: seven confirmatory proxies against `ni(non_mm)` on common market-days, with Holm
   correction, a rotation null, a two-way fixed-effects slope clustered by market and date, four verdicts
   (confirmed, reversed, uninformative, inconclusive), bootstrap rank intervals, and a half-sample stability
   check (kill criterion 4).
 - Secondary statistics for any proxy and truth pair: daily changes, daily cross-sectional Spearman with a
-  Fama–MacBeth mean and Newey–West error, an open-interest-weighted mean, a ±60-day placebo, the fixed-effects
-  slope, sign agreement with a Wilson interval, and tail lift. Each grid is flagged with Benjamini–Hochberg.
+  Fama-MacBeth mean and Newey-West error, an open-interest-weighted mean, a ±60-day placebo, the fixed-effects
+  slope, sign agreement with a Wilson interval, and tail lift. Each grid is flagged with Benjamini-Hochberg.
 - A positive control (`momentum_7d` against `ni(trend)`), cross-venue agreement for the three Binance ratios, and
   robustness grids for the four market-maker rule variants.
 - A second target: liquidations in the 7 days after each capture, scored cross-sectionally, with partial
@@ -161,5 +184,6 @@ Results: see [docs/results.md](docs/results.md).
 - Packaging: Python 3.10 or later, Apache-2.0, typed (`py.typed`), the `report` and `dev` extras, and the
   `herdbench` console script.
 
-[Unreleased]: https://github.com/z33shxn/herdbench/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/z33shxn/herdbench/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/z33shxn/herdbench/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/z33shxn/herdbench/releases/tag/v1.0.0

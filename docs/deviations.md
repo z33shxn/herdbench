@@ -4,7 +4,7 @@ Every departure from [the pre-registration](preregistration.md) is listed here w
 This list was written before any proxy was compared with the truth and is reproduced verbatim in
 [results.md](results.md).
 
-1. **The Barone–Lillo appendix was not run.** Section 11 lists their TWAP coefficient (θ = −0.0177, s.e. 0.0010,
+1. **The Barone-Lillo appendix was not run.** Section 11 lists their TWAP coefficient (θ = -0.0177, s.e. 0.0010,
    arXiv 2606.15715) as an appendix that gates nothing. Reproducing it means rebuilding both of their metaorder
    definitions (protocol TWAPs and statistical runs) and their regression sample, which is a separate replication
    study rather than a measurement of crowding proxies. It is left out of version 1.0 rather than shipped
@@ -12,7 +12,7 @@ This list was written before any proxy was compared with the truth and is reprod
    depends on it.
 
 2. **Window of `dtl` (days to liquidate).** Section 9 defines dtl as |non_mm net notional| ÷ mean daily volume
-   without fixing the window. HerdBench uses the mean daily taker volume over the days of [c − 7d, c) that have
+   without fixing the window. HerdBench uses the mean daily taker volume over the days of [c - 7d, c) that have
    archived fills (a day missing from the archive is left out of the mean, not counted as zero), and publishes dtl
    for every cohort, each with its own net notional. As registered, dtl is published and never scored against
    `oi_to_volume_7d`.

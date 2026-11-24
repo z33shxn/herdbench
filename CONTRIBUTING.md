@@ -17,8 +17,8 @@ pip install -e ".[dev]"
 ```
 
 The `dev` extra installs pytest, Hypothesis, ruff, mypy and type stubs, matplotlib for the report's figures, and
-statsmodels and arch, which the tests use as reference implementations (Newey–West and clustered standard
-errors, the Politis–White block length). Developing and testing need no data download, no account and no key.
+statsmodels and arch, which the tests use as reference implementations (Newey-West and clustered standard
+errors, the Politis-White block length). Developing and testing need no data download, no account and no key.
 
 ## Checks that must pass
 
@@ -57,8 +57,10 @@ Every analysis parameter lives in two places:
 `tests/test_preregistration.py` reads every such row. It fails if a field of `PreRegistration` is missing from
 the document, if a value differs, or if the document states a parameter the code does not have.
 
-`docs/preregistration.md` is the registered text. Its SHA-256 is recorded in `docs/timestamps/prereg-v1.txt`,
-which an OpenTimestamps proof anchors, and `results/manifest.json` records it again. Do not edit it. Because the
+`docs/preregistration.md` is the registered text. The SHA-256 of the registered version (commit `f205501`) is
+recorded in `docs/timestamps/prereg-v1.txt`, which an OpenTimestamps proof anchors, and `results/manifest.json`
+records it again. Do not edit its content. The one edit since registration is typographic (en dashes and minus
+signs became ASCII hyphens), and a test checks that nothing else differs. Because the
 test keeps code and document equal, a registered parameter cannot be changed in place either. The rules:
 
 1. **Do not hard-code analysis choices.** Thresholds, windows, seeds, cohorts, proxy lists and bootstrap

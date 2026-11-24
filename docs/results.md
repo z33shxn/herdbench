@@ -13,7 +13,7 @@ Every number below is read from the files in `results/`, whose SHA-256 hashes ar
 | Kill criterion 1 (reported) | 21 US single-stock perps with ≥ 183 days of fills | ≥ 25 | fail (not gating) |
 | Kill criterion 3 (settlement pairing) | clustered power 0.840 at ρ = 0.2 | ≥ 0.80 | pass |
 | Kill criterion 3 (publication pairing) | clustered power 0.837 at ρ = 0.2 | ≥ 0.80 | pass |
-| Kill criterion 4 (ranking claims) | Kendall τ between half-sample rankings – | ≥ 0.40 | no ranking claimed (fewer than 3 decisive verdicts) |
+| Kill criterion 4 (ranking claims) | Kendall τ between half-sample rankings n/a | ≥ 0.40 | no ranking claimed (fewer than 3 decisive verdicts) |
 
 Snapshot pairs below 99% on their own: 2026-05-23 (33.6%), 2026-07-17 (65.3%). Every other pair reconciles in full; a short pair points to fills missing inside an archived day.
 
@@ -37,18 +37,19 @@ Truth: ni(non_mm), the net position of every account except market makers and pr
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="figures/primary-dark.svg">
-  <img alt="Primary family: proxy vs ni(non_mm)" src="figures/primary-light.svg" width="760">
+  <source media="(prefers-color-scheme: light)" srcset="figures/primary-light.svg">
+  <img alt="Primary family: each proxy against ni (market makers removed)" src="figures/primary-light.svg" width="760">
 </picture>
 
 | Rank [95%] | Proxy | ρ | 95% CI | Holm p | Rotation 95% | FE slope | Verdict | ai(all) ρ |
 |:---|:---|---:|---:|---:|---:|---:|:---|---:|
-| 1 [1–1] | `premium_24h` | 0.295 | [0.223, 0.402] | 0.007 | 0.118 | 38.316 | **confirmed** | 0.330 |
-| 2 [2–4] | `momentum_7d` | 0.136 | [0.073, 0.211] | 0.018 | 0.079 | 0.001 | **confirmed** | 0.309 |
-| 3 [2–7] | `bn_top_position_ls` | 0.094 | [-0.000, 0.175] | 0.265 | 0.110 | 0.036 | **inconclusive** | 0.318 |
-| 4 [3–7] | `bn_top_account_ls` | 0.064 | [-0.027, 0.160] | 0.597 | 0.061 | 0.022 | **inconclusive** | 0.326 |
-| 5 [3–7] | `bn_global_ls` | 0.026 | [-0.074, 0.137] | 0.770 | 0.056 | 0.019 | **inconclusive** | 0.349 |
-| 6 [4–7] | `bn_taker_ls` | 0.025 | [-0.001, 0.058] | 0.265 | 0.050 | -0.019 | **uninformative** | -0.075 |
-| 7 [3–7] | `oi_flow_7d` | -0.024 | [-0.074, 0.030] | 0.770 | 0.046 | -0.007 | **uninformative** | 0.110 |
+| 1 [1, 1] | `premium_24h` | 0.295 | [0.223, 0.402] | 0.007 | 0.118 | 38.316 | **confirmed** | 0.330 |
+| 2 [2, 4] | `momentum_7d` | 0.136 | [0.073, 0.211] | 0.018 | 0.079 | 0.001 | **confirmed** | 0.309 |
+| 3 [2, 7] | `bn_top_position_ls` | 0.094 | [-0.000, 0.175] | 0.265 | 0.110 | 0.036 | **inconclusive** | 0.318 |
+| 4 [3, 7] | `bn_top_account_ls` | 0.064 | [-0.027, 0.160] | 0.597 | 0.061 | 0.022 | **inconclusive** | 0.326 |
+| 5 [3, 7] | `bn_global_ls` | 0.026 | [-0.074, 0.137] | 0.770 | 0.056 | 0.019 | **inconclusive** | 0.349 |
+| 6 [4, 7] | `bn_taker_ls` | 0.025 | [-0.001, 0.058] | 0.265 | 0.050 | -0.019 | **uninformative** | -0.075 |
+| 7 [3, 7] | `oi_flow_7d` | -0.024 | [-0.074, 0.030] | 0.770 | 0.046 | -0.007 | **uninformative** | 0.110 |
 
 Stability (half-samples split at 2026-03-23): unstable verdicts: none. No ranking is claimed (kill criterion 4); the ranks above are descriptive.
 
@@ -58,6 +59,7 @@ Rerun on the published panel only (in-sample, published panel): `premium_24h` 0.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="figures/checks-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="figures/checks-light.svg">
   <img alt="Positive control and cross-venue agreement" src="figures/checks-light.svg" width="760">
 </picture>
 
@@ -71,7 +73,7 @@ Rerun on the published panel only (in-sample, published panel): `premium_24h` 0.
 
 ## 5. Secondary statistics (exploratory)
 
-All-market panel (eligible main-dex markets with at least 60 days), cohort non_mm. Rows are flagged with Benjamini–Hochberg at q = 0.05 within each grid. Full grids, every cohort: `results/*.csv` and `results/binance/*.csv`.
+All-market panel (eligible main-dex markets with at least 60 days), cohort non_mm. Rows are flagged with Benjamini-Hochberg at q = 0.05 within each grid. Full grids, every cohort: `results/*.csv` and `results/binance/*.csv`.
 
 **Directional proxies**
 
@@ -97,23 +99,23 @@ All-market panel (eligible main-dex markets with at least 60 days), cohort non_m
 
 | Proxy | Truth | ρ | 95% CI | Cross-section ρ | Changes ρ | Placebo ρ | Sign agreement | BH flag |
 |:---|:---|---:|---:|---:|---:|---:|---:|:---|
-| `oi_change_7d` | abs_ni | 0.089 | [0.041, 0.125] | 0.081 | -0.079 | 0.006 | – | yes |
-| `liq_intensity_7d` | abs_ni | 0.005 | [-0.065, 0.078] | 0.018 | 0.045 | -0.066 | – | no |
-| `abs_premium_24h` | abs_ni | -0.048 | [-0.100, 0.011] | -0.073 | -0.011 | 0.013 | – | no |
-| `oi_to_volume_7d` | abs_ni | -0.066 | [-0.140, 0.009] | -0.039 | -0.071 | 0.042 | – | no |
-| `oi_to_volume_7d` | coheld_share | 0.111 | [0.059, 0.148] | 0.176 | 0.027 | 0.020 | – | yes |
-| `comovement_30d` | coheld_share | 0.067 | [-0.014, 0.132] | 0.276 | 0.023 | -0.040 | – | no |
-| `abs_premium_24h` | coheld_share | -0.013 | [-0.042, 0.036] | 0.010 | 0.016 | -0.021 | – | no |
-| `liq_intensity_7d` | coheld_share | -0.052 | [-0.100, 0.011] | -0.185 | 0.014 | -0.030 | – | no |
-| `oi_change_7d` | coheld_share | -0.074 | [-0.115, -0.032] | -0.030 | 0.039 | -0.009 | – | yes |
-| `liq_intensity_7d` | fragile_share | 0.060 | [-0.031, 0.132] | 0.421 | -0.062 | -0.015 | – | no |
-| `oi_change_7d` | fragile_share | 0.017 | [-0.021, 0.050] | 0.004 | -0.009 | -0.001 | – | no |
-| `oi_to_volume_7d` | fragile_share | -0.048 | [-0.132, 0.056] | -0.349 | 0.046 | 0.039 | – | no |
-| `abs_premium_24h` | fragile_share | -0.072 | [-0.107, -0.022] | 0.023 | 0.003 | -0.029 | – | yes |
-| `oi_to_volume_7d` | top10_share | 0.192 | [0.135, 0.235] | 0.019 | 0.031 | 0.018 | – | yes |
-| `oi_change_7d` | top10_share | 0.000 | [-0.030, 0.031] | -0.025 | 0.008 | 0.008 | – | no |
-| `abs_premium_24h` | top10_share | -0.068 | [-0.120, -0.021] | 0.032 | -0.043 | -0.011 | – | yes |
-| `liq_intensity_7d` | top10_share | -0.116 | [-0.156, -0.071] | 0.149 | -0.030 | 0.001 | – | yes |
+| `oi_change_7d` | abs_ni | 0.089 | [0.041, 0.125] | 0.081 | -0.079 | 0.006 | n/a | yes |
+| `liq_intensity_7d` | abs_ni | 0.005 | [-0.065, 0.078] | 0.018 | 0.045 | -0.066 | n/a | no |
+| `abs_premium_24h` | abs_ni | -0.048 | [-0.100, 0.011] | -0.073 | -0.011 | 0.013 | n/a | no |
+| `oi_to_volume_7d` | abs_ni | -0.066 | [-0.140, 0.009] | -0.039 | -0.071 | 0.042 | n/a | no |
+| `oi_to_volume_7d` | coheld_share | 0.111 | [0.059, 0.148] | 0.176 | 0.027 | 0.020 | n/a | yes |
+| `comovement_30d` | coheld_share | 0.067 | [-0.014, 0.132] | 0.276 | 0.023 | -0.040 | n/a | no |
+| `abs_premium_24h` | coheld_share | -0.013 | [-0.042, 0.036] | 0.010 | 0.016 | -0.021 | n/a | no |
+| `liq_intensity_7d` | coheld_share | -0.052 | [-0.100, 0.011] | -0.185 | 0.014 | -0.030 | n/a | no |
+| `oi_change_7d` | coheld_share | -0.074 | [-0.115, -0.032] | -0.030 | 0.039 | -0.009 | n/a | yes |
+| `liq_intensity_7d` | fragile_share | 0.060 | [-0.031, 0.132] | 0.421 | -0.062 | -0.015 | n/a | no |
+| `oi_change_7d` | fragile_share | 0.017 | [-0.021, 0.050] | 0.004 | -0.009 | -0.001 | n/a | no |
+| `oi_to_volume_7d` | fragile_share | -0.048 | [-0.132, 0.056] | -0.349 | 0.046 | 0.039 | n/a | no |
+| `abs_premium_24h` | fragile_share | -0.072 | [-0.107, -0.022] | 0.023 | 0.003 | -0.029 | n/a | yes |
+| `oi_to_volume_7d` | top10_share | 0.192 | [0.135, 0.235] | 0.019 | 0.031 | 0.018 | n/a | yes |
+| `oi_change_7d` | top10_share | 0.000 | [-0.030, 0.031] | -0.025 | 0.008 | 0.008 | n/a | no |
+| `abs_premium_24h` | top10_share | -0.068 | [-0.120, -0.021] | 0.032 | -0.043 | -0.011 | n/a | yes |
+| `liq_intensity_7d` | top10_share | -0.116 | [-0.156, -0.071] | 0.149 | -0.030 | 0.001 | n/a | yes |
 
 **Sensitivity: flow proxies on complete 7-day windows** (cohort non_mm; see Deviations)
 
@@ -149,16 +151,16 @@ All-market panel (eligible main-dex markets with at least 60 days), cohort non_m
 | `top10_share` | truth | liquidation intensity | 0.192 | 0.013 | <0.001 | 0.232 | yes | registered |
 | `fragile_share` | truth | liquidation intensity | 0.472 | 0.020 | <0.001 | 0.498 | yes | registered |
 | `coheld_share` | truth | liquidation intensity | -0.166 | 0.027 | <0.001 | -0.166 | yes | registered |
-| `premium_24h` | proxy | long minus short liquidations | 0.009 | 0.017 | 0.585 | – | no | registered |
-| `momentum_7d` | proxy | long minus short liquidations | -0.162 | 0.025 | <0.001 | – | yes | registered |
-| `oi_flow_7d` | proxy | long minus short liquidations | -0.014 | 0.013 | 0.282 | – | no | registered |
-| `funding_24h` | proxy | long minus short liquidations | 0.016 | 0.016 | 0.333 | – | no | registered |
-| `funding_7d` | proxy | long minus short liquidations | 0.034 | 0.019 | 0.077 | – | no | registered |
-| `ni` | truth | long minus short liquidations | 0.027 | 0.024 | 0.262 | – | no | registered |
-| `ai` | truth | long minus short liquidations | -0.044 | 0.019 | 0.019 | – | yes | registered |
-| `lwi` | truth | long minus short liquidations | 0.076 | 0.018 | <0.001 | – | yes | registered |
-| `liq_intensity_7d` | proxy | liquidation intensity | 0.486 | 0.039 | <0.001 | 0.493 | – | complete windows |
-| `oi_to_volume_7d` | proxy | liquidation intensity | -0.449 | 0.050 | <0.001 | -0.451 | – | complete windows |
+| `premium_24h` | proxy | long minus short liquidations | 0.009 | 0.017 | 0.585 | n/a | no | registered |
+| `momentum_7d` | proxy | long minus short liquidations | -0.162 | 0.025 | <0.001 | n/a | yes | registered |
+| `oi_flow_7d` | proxy | long minus short liquidations | -0.014 | 0.013 | 0.282 | n/a | no | registered |
+| `funding_24h` | proxy | long minus short liquidations | 0.016 | 0.016 | 0.333 | n/a | no | registered |
+| `funding_7d` | proxy | long minus short liquidations | 0.034 | 0.019 | 0.077 | n/a | no | registered |
+| `ni` | truth | long minus short liquidations | 0.027 | 0.024 | 0.262 | n/a | no | registered |
+| `ai` | truth | long minus short liquidations | -0.044 | 0.019 | 0.019 | n/a | yes | registered |
+| `lwi` | truth | long minus short liquidations | 0.076 | 0.018 | <0.001 | n/a | yes | registered |
+| `liq_intensity_7d` | proxy | liquidation intensity | 0.486 | 0.039 | <0.001 | 0.493 | n/a | complete windows |
+| `oi_to_volume_7d` | proxy | liquidation intensity | -0.449 | 0.050 | <0.001 | -0.451 | n/a | complete windows |
 
 Δρ: fragile_share minus the best unsigned proxy (chosen on one half, scored on the other):
 
@@ -171,16 +173,17 @@ All-market panel (eligible main-dex markets with at least 60 days), cohort non_m
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="figures/transfer-dark.svg">
-  <img alt="US single-stock perps: equity-side proxies vs ni(non_mm)" src="figures/transfer-light.svg" width="760">
+  <source media="(prefers-color-scheme: light)" srcset="figures/transfer-light.svg">
+  <img alt="US single-stock perps: equity-side proxies against ni (market makers removed)" src="figures/transfer-light.svg" width="760">
 </picture>
 
 **Settlement pairing**: 40 stocks, 17 settlement dates, 378 stock-dates; clustered power 0.840 (p-values reported).
 
 | Proxy | Expected | β (std.) | 95% CI | p | Two-way s.e. | N |
 |:---|:---:|---:|---:|---:|---:|---:|
-| `si_change_pct` | − | -0.085 | [-0.199, 0.029] | 0.138 | 0.042 | 378 |
-| `days_to_cover` | − | 0.065 | [-0.009, 0.139] | 0.086 | 0.038 | 378 |
-| `log_short_interest` | − | -0.084 | [-0.169, -0.000] | 0.049 | 0.045 | 378 |
+| `si_change_pct` | - | -0.085 | [-0.199, 0.029] | 0.138 | 0.042 | 378 |
+| `days_to_cover` | - | 0.065 | [-0.009, 0.139] | 0.086 | 0.038 | 378 |
+| `log_short_interest` | - | -0.084 | [-0.169, -0.000] | 0.049 | 0.045 | 378 |
 | `funding_period` | + | 0.006 | [-0.051, 0.063] | 0.840 | 0.022 | 378 |
 | `premium_period` | + | 0.030 | [-0.035, 0.096] | 0.355 | 0.031 | 378 |
 | `momentum_period` | + | 0.088 | [0.001, 0.174] | 0.047 | 0.041 | 366 |
@@ -190,9 +193,9 @@ All-market panel (eligible main-dex markets with at least 60 days), cohort non_m
 
 | Proxy | Expected | β (std.) | 95% CI | p | Two-way s.e. | N |
 |:---|:---:|---:|---:|---:|---:|---:|
-| `si_change_pct` | − | -0.042 | [-0.155, 0.070] | 0.452 | 0.058 | 361 |
-| `days_to_cover` | − | 0.086 | [-0.029, 0.201] | 0.139 | 0.066 | 361 |
-| `log_short_interest` | − | -0.004 | [-0.080, 0.072] | 0.908 | 0.037 | 361 |
+| `si_change_pct` | - | -0.042 | [-0.155, 0.070] | 0.452 | 0.058 | 361 |
+| `days_to_cover` | - | 0.086 | [-0.029, 0.201] | 0.139 | 0.066 | 361 |
+| `log_short_interest` | - | -0.004 | [-0.080, 0.072] | 0.908 | 0.037 | 361 |
 | `funding_period` | + | -0.031 | [-0.109, 0.047] | 0.430 | 0.049 | 361 |
 | `premium_period` | + | -0.022 | [-0.109, 0.066] | 0.617 | 0.054 | 361 |
 | `momentum_period` | + | 0.076 | [-0.060, 0.211] | 0.265 | 0.070 | 351 |
@@ -215,7 +218,7 @@ Source and owner of the short-interest data: FINRA. Summary statistics only; non
 | xyz:GOLD | 33 | 0.314 | 0.075 |
 | xyz:JPY | 29 | 0.022 | 0.909 |
 | xyz:NATGAS | 26 | -0.029 | 0.888 |
-| xyz:PALLADIUM | 2 | – | – |
+| xyz:PALLADIUM | 2 | n/a | n/a |
 | xyz:PLATINUM | 25 | 0.128 | 0.543 |
 | xyz:SILVER | 33 | -0.115 | 0.525 |
 | xyz:SP500 | 21 | 0.199 | 0.388 |
@@ -251,7 +254,7 @@ Every departure from [the pre-registration](preregistration.md) is listed here w
 This list was written before any proxy was compared with the truth and is reproduced verbatim in
 [results.md](results.md).
 
-1. **The Barone–Lillo appendix was not run.** Section 11 lists their TWAP coefficient (θ = −0.0177, s.e. 0.0010,
+1. **The Barone-Lillo appendix was not run.** Section 11 lists their TWAP coefficient (θ = -0.0177, s.e. 0.0010,
    arXiv 2606.15715) as an appendix that gates nothing. Reproducing it means rebuilding both of their metaorder
    definitions (protocol TWAPs and statistical runs) and their regression sample, which is a separate replication
    study rather than a measurement of crowding proxies. It is left out of version 1.0 rather than shipped
@@ -259,7 +262,7 @@ This list was written before any proxy was compared with the truth and is reprod
    depends on it.
 
 2. **Window of `dtl` (days to liquidate).** Section 9 defines dtl as |non_mm net notional| ÷ mean daily volume
-   without fixing the window. HerdBench uses the mean daily taker volume over the days of [c − 7d, c) that have
+   without fixing the window. HerdBench uses the mean daily taker volume over the days of [c - 7d, c) that have
    archived fills (a day missing from the archive is left out of the mean, not counted as zero), and publishes dtl
    for every cohort, each with its own net notional. As registered, dtl is published and never scored against
    `oi_to_volume_7d`.

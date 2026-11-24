@@ -42,11 +42,17 @@ def test_figures_are_byte_for_byte_reproducible(built, tmp_path):
     for f in a.iterdir():
         assert (b / f.name).read_bytes() == f.read_bytes(), f.name
         assert b"\r\n" not in f.read_bytes(), f.name
+        text = f.read_text(encoding="utf-8")
+        assert "_" not in text, f"{f.name}: an underscore in a figure"
+        assert chr(0x2212) not in text, f"{f.name}: a minus sign"
+        assert chr(0x2013) not in text, f"{f.name}: an en dash"
 
 
 def test_formatting_helpers():
     assert report.pval(0.0004) == "<0.001"
-    assert report.pval(float("nan")) == "–"
+    assert report.pval(float("nan")) == "n/a"
+    assert report.num(None) == "n/a"
+    assert report.interval(float("nan"), 1.0) == "n/a"
     assert report.interval(-0.1234, 0.5) == "[-0.123, 0.500]"
     assert report.num(1234) == "1,234"
     assert report.table([["a", "1"]], ["x", "y"]).splitlines()[1] == "|:---|---:|"

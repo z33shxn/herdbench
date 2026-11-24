@@ -59,3 +59,22 @@ def test_no_file_in_the_repository_names_a_non_protocol_address():
             continue
         found = set(pattern.findall(path.read_text(encoding="utf-8", errors="ignore"))) - allowed
         assert not found, (path, sorted(found)[:3])
+
+
+def test_no_long_dash_or_minus_sign_in_any_tracked_text_file():
+    """House style: plain hyphens only, so no en or em dash, horizontal bar or Unicode minus anywhere."""
+    import subprocess
+    from urllib.parse import quote
+
+    listed = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True, text=True, check=False)
+    if listed.returncode != 0:
+        pytest.skip("not a git checkout")
+    dashes = [chr(c) for c in (0x2012, 0x2013, 0x2014, 0x2015, 0x2212, 0x2E3A, 0x2E3B, 0xFE58)]
+    encoded = [quote(d) for d in dashes]  # the same characters inside URLs, such as badge links
+    for rel in listed.stdout.splitlines():
+        path = ROOT / rel
+        if path.suffix in (".parquet", ".ots", ".png", ".jpg") or not path.is_file():
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        assert not any(d in text for d in dashes), rel
+        assert not any(e in text.upper() for e in encoded), rel

@@ -47,3 +47,35 @@ def test_every_parameter_is_stated_in_the_document_with_the_same_value(field):
 def test_the_document_states_no_parameter_the_code_lacks():
     names = {f.name for f in dataclasses.fields(PREREG)}
     assert set(doc_values()) <= names
+
+
+def _records() -> list[tuple[str, str, str]]:
+    """(commit, path, sha256) for each timestamped record in docs/timestamps."""
+    out = []
+    for record in sorted((DOC.parent / "timestamps").glob("*-v1.txt")):
+        text = record.read_text(encoding="utf-8")
+        commit = re.search(r"^commit ([0-9a-f]{40})$", text, re.M)
+        doc = re.search(r"^sha256\((docs/[^)]+)\) ([0-9a-f]{64})$", text, re.M)
+        assert commit, record.name
+        assert doc, record.name
+        out.append((commit.group(1), doc.group(1), doc.group(2)))
+    return out
+
+
+def test_registered_documents_changed_only_in_typography_since_they_were_timestamped():
+    """The registered texts were later edited for typography only: long dashes and minus signs became ASCII hyphens.
+    The timestamped versions stay in git at the recorded commits; both facts are checked here."""
+    import hashlib
+    import subprocess
+
+    root = DOC.parents[1]
+    records = _records()
+    assert {path for _, path, _ in records} == {"docs/preregistration.md", "docs/preregistration_addendum.md"}
+    for commit, path, digest in records:
+        shown = subprocess.run(["git", "show", f"{commit}:{path}"], cwd=root, capture_output=True, check=False)
+        if shown.returncode != 0:
+            pytest.skip("git history is not available in this checkout")
+        assert hashlib.sha256(shown.stdout).hexdigest() == digest, path
+        registered = shown.stdout.decode("utf-8")
+        typeset = registered.replace(chr(0x2013), "-").replace(chr(0x2212), "-")
+        assert (root / path).read_text(encoding="utf-8") == typeset, path

@@ -355,14 +355,20 @@ A hash compares bytes, not numbers. In rough order from harmless to substantive,
 
 ### The registered documents and your checkout
 
-- `docs/timestamps/prereg-v1.txt` records the registering commit and the SHA-256 of `docs/preregistration.md`. That
-  value must equal both the file's own hash and `preregistration_sha256` in the manifest. `addendum_sha256` must
-  equal the hash of `docs/preregistration_addendum.md`.
+- `docs/timestamps/prereg-v1.txt` and `docs/timestamps/addendum-v1.txt` record a commit and the SHA-256 of each
+  registered document, and `preregistration_sha256` and `addendum_sha256` in the manifest repeat the two hashes.
+  They are hashes of the documents as registered, which git keeps at the recorded commits. In version 1.1.0 the
+  working-tree copy of `docs/preregistration.md` was retypeset (en dashes and minus signs became ASCII hyphens;
+  nothing else changed), so hash the registered versions directly:
 
   ```bash
-  python -c "from herdbench.pipeline import sha256_file as h; print(h('docs/preregistration.md'))"
-  python -c "from herdbench.pipeline import sha256_file as h; print(h('docs/preregistration_addendum.md'))"
+  git show f205501:docs/preregistration.md | sha256sum            # ae32842f...
+  git show a77b84d:docs/preregistration_addendum.md | sha256sum   # 5cf5cbb7...
   ```
+
+  The addendum in the working tree is unchanged and hashes to the same value.
+  `tests/test_preregistration.py` checks both hashes against the records, and checks that each working-tree file
+  differs from its registered version only in those characters (it is skipped in a checkout without history).
 
 - Each `.ots` file in `docs/timestamps/` is an OpenTimestamps proof of the text file next to it. The
   OpenTimestamps client checks it, for example `ots verify docs/timestamps/prereg-v1.txt.ots`.

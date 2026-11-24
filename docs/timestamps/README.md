@@ -22,12 +22,29 @@ analysis choices. Its Bitcoin anchor came eight minutes after the scoring run st
 the anchor alone bounds when the addendum existed but does not order it before scoring; that order rests on the git
 history (`a77b84d` and `e891b76` precede `42f6fa8`, which adds the results) and on the calendars' receipt at 14:51 UTC.
 
+## Typography since registration
+
+On 24 November 2026 (version 1.1.0) the repository adopted plain hyphens everywhere: every en dash and Unicode
+minus sign became an ASCII hyphen. That includes the working-tree copy of `docs/preregistration.md`, which held 6 en
+dashes and 13 minus signs. No other character changed, the addendum held none and is untouched, and the records
+and proofs here are unchanged. The hashes in the records are of the documents as registered, which git keeps at the
+recorded commits. `tests/test_preregistration.py` checks both hashes and that each working-tree file differs from
+its registered version only in those two characters.
+
 ## Verify
 
-1. Check the documents against the records: the SHA-256 of `docs/preregistration.md` and of
-   `docs/preregistration_addendum.md` must equal the values in the two text files, and each named commit must be in
-   this repository's history (`git cat-file -t <commit>`). Text files are stored with LF line ends
-   (`.gitattributes`), so the hashes are the same on every platform.
+1. Check the registered documents against the records. Hash each document as it stood at its recorded commit; the
+   results must equal the values in the two text files:
+
+   ```bash
+   git show f205501:docs/preregistration.md | sha256sum            # ae32842f15e2...
+   git show a77b84d:docs/preregistration_addendum.md | sha256sum   # 5cf5cbb72965...
+   ```
+
+   The working-tree addendum hashes to the same value. For the pre-registration, confirm that the working tree
+   differs only in typography: `git diff --word-diff=color f205501 -- docs/preregistration.md` shows nothing but
+   dashes turned into hyphens. Text files are stored with LF line ends (`.gitattributes`), so the hashes are the
+   same on every platform.
 2. Check each proof, either way:
    * drop the `.ots` file and its text file on <https://opentimestamps.org>, or
    * run `ots verify docs/timestamps/prereg-v1.txt.ots` with the

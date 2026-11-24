@@ -105,7 +105,7 @@ protocol accounts (section 4) and market makers (section 5) separated out:
 ```
 non_mm net + market-maker net + protocol net = 0
 
-ni(non_mm) = non_mm net ÷ non_mm gross = −(market-maker net + protocol net) ÷ non_mm gross
+ni(non_mm) = non_mm net ÷ non_mm gross = -(market-maker net + protocol net) ÷ non_mm gross
 ```
 
 ni(non_mm) is the primary truth, called net positioning. "Crowding" refers to the unsigned truths of section 7.
@@ -161,7 +161,7 @@ For each snapshot and market, over all accounts including protocol accounts (`ma
 mark             = (long notional + short notional) ÷ Σ |size|
 oi_notional      = long notional
 oi_contracts     = Σ size of long positions
-long_short_gap   = (long notional − short notional) ÷ (long notional + short notional)
+long_short_gap   = (long notional - short notional) ÷ (long notional + short notional)
 ```
 
 The evaluation window is the snapshots dated 2025-08-28 to 2026-08-18 (`pipeline.eval_dates`). Truth cells, proxies
@@ -170,7 +170,7 @@ reach outside the evaluation window: the entity-map lookup (section 3), the forw
 outcomes run up to 7 days past the last evaluation snapshot (section 18), and the gates (section 21).
 
 Nothing is differenced across a missing date. Style flows need snapshots on three consecutive dates; open-interest
-changes use exactly the snapshots dated D − 1 and D − 8; eligibility uses the snapshot dated D − 1; the
+changes use exactly the snapshots dated D - 1 and D - 8; eligibility uses the snapshot dated D - 1; the
 reconciliation gate pairs consecutive dates only; the daily-change statistic differences consecutive dates only.
 
 ### 2.3 Fills
@@ -211,12 +211,12 @@ scored once, as the premium.
 The cutoff c of a snapshot is its capture time truncated to the hour: the last full UTC hour at or before the
 capture (`proxies/native.py::cutoff`). Every proxy for that snapshot is built from these inputs only:
 
-- funding and premium rows stamped in [c − 24h, c) or [c − 7d, c);
+- funding and premium rows stamped in [c - 24h, c) or [c - 7d, c);
 - prices, volume and liquidations from hourly bars that end at or before c;
-- open interest from the snapshots dated D − 1 and D − 8, never the snapshot being scored. These snapshots are
+- open interest from the snapshots dated D - 1 and D - 8, never the snapshot being scored. These snapshots are
   chosen by date; their capture times are not compared with c;
 - Binance metrics rows stamped before c (their information runs up to c; section 8), and Binance klines and
-  funding settlements stamped in [c − 24h, c).
+  funding settlements stamped in [c - 24h, c).
 
 The pre-registration's record of capture times: 271 snapshots were captured between 00:00 and 01:00 UTC on their
 date, so c is 00:00 on D. Sixty-two were captured later on their date, mostly at about 20:05 UTC from 2025-08-28 to
@@ -261,7 +261,7 @@ positions net to zero (|net| at most 10⁻⁹ of its address-level gross) holds 
 rule, the cohorts, the disclosure rules and every truth metric are computed on entities. Netting leaves net notional
 unchanged and reduces gross notional where sub-accounts offset.
 
-**Freezing.** The map's SHA-256 (of the sorted address–master pairs in compact JSON, `entities.map_hash`) is recorded
+**Freezing.** The map's SHA-256 (of the sorted address-master pairs in compact JSON, `entities.map_hash`) is recorded
 in the addendum before any proxy is compared with the truth. `herdbench build score --strict` refuses to run unless
 the current map hashes to that value (`herdbench build all --strict` does the same). Without `--strict`, scoring
 checks only that the addendum exists; a rerun months later may find new sub-accounts and so a different map.
@@ -287,7 +287,7 @@ They stay in open interest, marks and the reconciliation gate, which cover every
 from `all`, ni(all) is not zero. It is the protocol accounts' book, negated:
 
 ```
-ni(all) = −protocol net ÷ all gross
+ni(all) = -protocol net ÷ all gross
 ```
 
 ai(all) counts entities rather than notional, so it barely depends on where the market-maker line falls. As
@@ -300,8 +300,8 @@ statistic against ai(all) on the family's common support (`ai_all_rho`, `ai_all_
 Registered in [§5 Who counts as the crowd](preregistration.md#5-who-counts-as-the-crowd). Code: `truth/mm.py`,
 `truth/build.py::market_maker_sets`.
 
-An entity is a market maker for snapshot date D if it passes all four tests over the 30 calendar days D − 30 to
-D − 1, with fills from every perpetual market on every dex pooled. Fills dated D are never used.
+An entity is a market maker for snapshot date D if it passes all four tests over the 30 calendar days D - 30 to
+D - 1, with fills from every perpetual market on every dex pooled. Fills dated D are never used.
 
 | Test | Rule | Parameter |
 |---|---|---|
@@ -345,7 +345,7 @@ accounts are never included.
 | `non_mm` | `all` minus the market makers of section 5; empty when the set is unknown |
 | `top_av` | inside `non_mm`: the top 20% of the market's rankable holders by lagged entity account value, k = ceil(0.20 × number rankable), ties broken by entity identifier |
 | `trend` | inside `non_mm`: trend score ≥ +0.20 |
-| `contrarian` | inside `non_mm`: trend score ≤ −0.20 |
+| `contrarian` | inside `non_mm`: trend score ≤ -0.20 |
 
 Because `top_av`, `trend` and `contrarian` are drawn from inside `non_mm`, no sub-cohort contains market-maker
 inventory.
@@ -353,18 +353,18 @@ inventory.
 **Lagged account value.** An entity's account value on a snapshot is, for each of its addresses, the largest account
 value reported across that address's position rows, summed over the entity's addresses. (An address can report on
 several dexes; taking the largest avoids counting it twice.) `top_av` ranks on the value from the snapshot dated
-D − 8 or, if that date is missing, the most recent snapshot dated D − 9 to D − 14. An entity with no value there,
+D - 8 or, if that date is missing, the most recent snapshot dated D - 9 to D - 14. An entity with no value there,
 which includes an entity with no open position on that snapshot, is not rankable. If no snapshot exists in that
 range, `top_av` is empty that day. The lag keeps a rally from promoting longs into `top_av` through unrealised
 profit.
 
-**Trend score.** For each date t with snapshots on t − 2, t − 1 and t (consecutive calendar days), every
+**Trend score.** For each date t with snapshots on t - 2, t - 1 and t (consecutive calendar days), every
 non-protocol address and market with a change in size, including a position opened or closed, gives a flow f. The
 flow is paired with the market's previous snapshot-to-snapshot log return r (markets quoted on all three snapshots):
 
 ```
-f = (size_t − size_{t−1}) × mark_t
-r = ln(mark_{t−1} ÷ mark_{t−2})
+f = (size_t - size_{t-1}) × mark_t
+r = ln(mark_{t-1} ÷ mark_{t-2})
 u = Σ f × r        v = Σ |f| × |r|        per address and date t, over its markets
 ```
 
@@ -372,11 +372,11 @@ n counts the nonzero flows behind u and v. Address contributions are summed with
 pools every market:
 
 ```
-score(D) = Σ u ÷ Σ v      over the entity's contribution dates t from D − 30 to D − 1
+score(D) = Σ u ÷ Σ v      over the entity's contribution dates t from D - 30 to D - 1
 ```
 
 It is defined when Σ v > 0 and the entity has at least 5 nonzero flows in the window. A score of +1 means every
-position change went in the direction of the previous day's return; −1 means every change went against it. Flows
+position change went in the direction of the previous day's return; -1 means every change went against it. Flows
 dated D or later never classify D. An entity without a score is in neither style cohort.
 
 **Robustness cohorts.** `non_mm_s070`, `non_mm_s090`, `non_mm_t020` and `non_mm_t100` are `all` minus the market
@@ -396,14 +396,14 @@ positions net to zero is not in the cell. For a cell with n entities, L the noti
 notional of its short entities:
 
 ```
-ni             = (L − S) ÷ (L + S)
-ai             = (n_long − n_short) ÷ n
+ni             = (L - S) ÷ (L + S)
+ai             = (n_long - n_short) ÷ n
 lwi            = Σ sign × notional × w ÷ Σ notional × w
 abs_ni         = |ni|
 top10_share    = notional of the k largest entities ÷ (L + S),   k = ceil(0.10 × n)
 fragile_share  = Σ fragile address-level notional ÷ Σ address-level notional
 coheld_share   = notional of co-held entities ÷ (L + S)
-dtl            = |L − S| ÷ mean daily taker notional over the archived days of [c − 7d, c)
+dtl            = |L - S| ÷ mean daily taker notional over the archived days of [c - 7d, c)
 ```
 
 | Metric | Type | Reading |
@@ -422,7 +422,7 @@ Definitions behind the formulas:
 - **Leverage weight.** w = min(G ÷ AV, 50). G is the entity's address-level gross notional summed over every market,
   on any dex, in which it holds a net position that day; AV is its account value on D (section 6). w = 50 when AV is
   zero, negative or missing. lwi is missing when its denominator is not positive.
-- **Fragile.** An address-level position is fragile when |mark − liquidation price| ÷ mark ≤ 0.10, with the market's
+- **Fragile.** An address-level position is fragile when |mark - liquidation price| ÷ mark ≤ 0.10, with the market's
   snapshot mark. A position without a liquidation price is not fragile. Fragility is measured on address-level
   positions, each with its own liquidation price, before netting. The denominator is the cell's address-level gross,
   which includes the offsetting legs of netted entities.
@@ -431,14 +431,14 @@ Definitions behind the formulas:
 - **Co-held.** A holding is co-held when its entity holds net positions in the same direction (long or short) in at
   least 5 other eligible markets, on any dex, that day (eligibility in section 9; the market itself is not counted).
   The flag belongs to the entity and market, so it is the same in every cohort.
-- **dtl.** The denominator is the market's mean daily taker notional over the days of [c − 7d, c) that have
+- **dtl.** The denominator is the market's mean daily taker notional over the days of [c - 7d, c) that have
   archived fills (`volume_7d_archived_mean`; a day missing from the archive is left out of the mean rather than
   counted as zero; deviation 2). Each cohort uses its own net notional. dtl is missing when that volume is zero or
   missing, and it exists for main-dex and `xyz` markets, where proxies are computed.
 - **Internal.** `top2_share`, the notional of the two largest entities ÷ (L + S), drives the disclosure rule and is
   never published.
 
-`gross_notional` = L + S and `net_notional` = L − S are published with each cell, with `n_entities`, the market's
+`gross_notional` = L + S and `net_notional` = L - S are published with each cell, with `n_entities`, the market's
 open interest on D (`oi_notional`), `eligible` and `cutoff`. Because netting preserves net notional, the identities of
 sections 1 and 4 hold at the entity level.
 
@@ -451,24 +451,24 @@ Every window ends at the cutoff c. Two building blocks:
 
 - P(t), the last trade price before t: the close of the latest hourly bar that ended at or before t. It is missing
   if no bar ended in the 24 hours before t.
-- OI(D − k), open interest in contracts (Σ size of long positions) at the snapshot dated D − k. Contracts keep price
+- OI(D - k), open interest in contracts (Σ size of long positions) at the snapshot dated D - k. Contracts keep price
   moves out of open-interest changes. "OI notional" below is long notional at that snapshot (section 2.2).
 
 **Hyperliquid-native proxies** (main-dex and `xyz` markets):
 
 | Proxy | Family | Definition | Missing when |
 |---|---|---|---|
-| `premium_24h` | confirmatory | mean hourly premium over [c − 24h, c) | fewer than 12 hourly rows |
-| `momentum_7d` | confirmatory | ln(P(c) ÷ P(c − 7d)) | either price is missing |
-| `oi_flow_7d` | confirmatory | sign(momentum_7d) × ln(OI(D − 1) ÷ OI(D − 8)) | either input is missing |
-| `funding_24h` | secondary directional | mean settled hourly funding over [c − 24h, c) | fewer than 12 rows |
-| `funding_7d` | secondary directional | mean settled hourly funding over [c − 7d, c) | fewer than 84 rows |
+| `premium_24h` | confirmatory | mean hourly premium over [c - 24h, c) | fewer than 12 hourly rows |
+| `momentum_7d` | confirmatory | ln(P(c) ÷ P(c - 7d)) | either price is missing |
+| `oi_flow_7d` | confirmatory | sign(momentum_7d) × ln(OI(D - 1) ÷ OI(D - 8)) | either input is missing |
+| `funding_24h` | secondary directional | mean settled hourly funding over [c - 24h, c) | fewer than 12 rows |
+| `funding_7d` | secondary directional | mean settled hourly funding over [c - 7d, c) | fewer than 84 rows |
 | `abs_premium_24h` | unsigned | \|premium_24h\|, the absolute value of the 24-hour mean | as `premium_24h` |
-| `oi_change_7d` | unsigned | ln(OI(D − 1) ÷ OI(D − 8)) | either snapshot is missing or its OI is not positive |
-| `liq_intensity_7d` | unsigned | liquidated notional in hourly bars inside [c − 7d, c) ÷ OI notional at D − 1 | OI notional at D − 1 is missing or not positive |
-| `oi_to_volume_7d` | unsigned | OI notional at D − 1 ÷ mean daily taker notional over [c − 7d, c) (the 7-day sum ÷ 7) | the 7-day taker notional is zero, or OI notional at D − 1 is missing |
-| `comovement_30d` | unsigned | Pearson correlation between the market's 30 daily log returns ending at c (from prices P(c − k days), k = 0 to 30) and the equal-weighted mean return of the other markets in its group on the same days | fewer than 20 days with both returns, or either series is constant |
-| `rv_7d` | control | sqrt(24 × sample variance of the hourly log returns of the bars inside [c − 7d, c)) | fewer than 84 returns |
+| `oi_change_7d` | unsigned | ln(OI(D - 1) ÷ OI(D - 8)) | either snapshot is missing or its OI is not positive |
+| `liq_intensity_7d` | unsigned | liquidated notional in hourly bars inside [c - 7d, c) ÷ OI notional at D - 1 | OI notional at D - 1 is missing or not positive |
+| `oi_to_volume_7d` | unsigned | OI notional at D - 1 ÷ mean daily taker notional over [c - 7d, c) (the 7-day sum ÷ 7) | the 7-day taker notional is zero, or OI notional at D - 1 is missing |
+| `comovement_30d` | unsigned | Pearson correlation between the market's 30 daily log returns ending at c (from prices P(c - k days), k = 0 to 30) and the equal-weighted mean return of the other markets in its group on the same days | fewer than 20 days with both returns, or either series is constant |
+| `rv_7d` | control | sqrt(24 × sample variance of the hourly log returns of the bars inside [c - 7d, c)) | fewer than 84 returns |
 
 An hourly return is ln(close ÷ the previous bar's close). An hour without a taker trade has no bar, so a return can
 span more than one hour. Also published with the native proxies: `pinned_share_24h` and `pinned_share_7d` (the
@@ -490,18 +490,18 @@ nothing.
 
 | Proxy | Family | Definition | Missing when |
 |---|---|---|---|
-| `bn_global_ls` | confirmatory | ln of `count_long_short_ratio` (global account long/short ratio) in the last Vision metrics row stamped before c | no row stamped in [c − 65 min, c), or the ratio is not positive |
+| `bn_global_ls` | confirmatory | ln of `count_long_short_ratio` (global account long/short ratio) in the last Vision metrics row stamped before c | no row stamped in [c - 65 min, c), or the ratio is not positive |
 | `bn_top_account_ls` | confirmatory | ln of `count_toptrader_long_short_ratio` (top-trader account ratio), same row | as above |
 | `bn_top_position_ls` | confirmatory | ln of `sum_toptrader_long_short_ratio` (top-trader position ratio), same row | as above |
-| `bn_taker_ls` | confirmatory | ln(Σ taker buy volume ÷ Σ taker sell volume) over 5-minute klines opening in [c − 24h, c); sell volume = volume − taker buy volume | no kline in the window, or either sum is not positive |
-| `bn_funding_24h` | secondary directional | mean of the funding rates settled in [c − 24h, c), as published (not rescaled by settlement interval) | no settlement in the window |
-| `bn_oi_change_7d` | unsigned | ln(`sum_open_interest` in the last row stamped before c ÷ the same in the last row stamped before c − 7d) | either row fails the staleness rule, or either value is not positive |
+| `bn_taker_ls` | confirmatory | ln(Σ taker buy volume ÷ Σ taker sell volume) over 5-minute klines opening in [c - 24h, c); sell volume = volume - taker buy volume | no kline in the window, or either sum is not positive |
+| `bn_funding_24h` | secondary directional | mean of the funding rates settled in [c - 24h, c), as published (not rescaled by settlement interval) | no settlement in the window |
+| `bn_oi_change_7d` | unsigned | ln(`sum_open_interest` in the last row stamped before c ÷ the same in the last row stamped before c - 7d) | either row fails the staleness rule, or either value is not positive |
 
 A Vision metrics row stamped T holds the values of Binance's REST row stamped T + 5 minutes (the mapping was checked
 against the REST endpoints; `sources/binance.py`), so its information is as of T + 5 minutes. The timing rule
-applies to the stamp. Rows are stamped every 5 minutes, so an admissible row is stamped c − 5 min or earlier and
+applies to the stamp. Rows are stamped every 5 minutes, so an admissible row is stamped c - 5 min or earlier and
 reflects the market at c or earlier. A ratio is missing when its information is more than 60 minutes old at c, that
-is, when no row is stamped in [c − 65 min, c). The same rule applies at c − 7d to the back leg of
+is, when no row is stamped in [c - 65 min, c). The same rule applies at c - 7d to the back leg of
 `bn_oi_change_7d`. Kline volumes are in base-asset units. Hyperliquid's `kPEPE` and `kBONK` map to Binance's
 `1000PEPEUSDT` and `1000BONKUSDT`.
 
@@ -516,7 +516,7 @@ floor of 0.01% per 8 hours, scaled to each settlement's interval (`bn_pinned_sha
 **Exclusions and special pairings.**
 
 - `momentum_7d` and `oi_flow_7d` are never scored against `trend` or `contrarian`, which are defined by the same
-  flow–return relation.
+  flow-return relation.
 - The one exception is a positive control: `momentum_7d` against ni(trend) must be above zero. A value at or below
   zero flags a pipeline error; the report prints the flag, and the pipeline does not stop.
 - `comovement_30d` is scored only against `coheld_share`, and, as registered, against "the other markets in the
@@ -534,8 +534,8 @@ Registered in [§7](preregistration.md#7-proxies-timing-and-the-primary-panel),
 [§12 Publication and privacy](preregistration.md#12-publication-and-privacy). Code: `truth/build.py::truth_cells`,
 `pipeline.py::scored_cells`, `pipeline.py::all_market_panel`, `grading/scorecard.py::primary_family`.
 
-- **Eligible market-days.** A market-day is eligible when open interest at the snapshot dated D − 1 is at least
-  $1,000,000. If D − 1 has no snapshot, no market is eligible on D. Every truth value that enters a statistic comes
+- **Eligible market-days.** A market-day is eligible when open interest at the snapshot dated D - 1 is at least
+  $1,000,000. If D - 1 has no snapshot, no market is eligible on D. Every truth value that enters a statistic comes
   from an eligible market-day. Proxies are not filtered separately: a statistic that pairs a proxy and a truth on the
   same day needs both values, so it uses eligible days only. Target (b) (section 18) restricts its proxy predictors
   to the same eligible market-days explicitly. The one exception is the placebo (section 17), which pairs a proxy
@@ -597,7 +597,7 @@ replicates with seed 20261117. The
 same draws serve all seven proxies, so intervals, ranks and pairwise comparisons come from the same resamples.
 
 **Block length.** For every series in the panel (the truth and each proxy, in each kept market, missing values
-dropped, at least 11 values and not constant), compute the Politis–White (2004) optimal block length for the
+dropped, at least 11 values and not constant), compute the Politis-White (2004) optimal block length for the
 circular bootstrap, with the Patton, Politis and White (2009) correction. The tests check this against the `arch`
 package. b is the median across series, rounded to an integer and clipped to [20, 40]; it is 20 if no series
 qualifies. One b serves the whole primary family. It is reported in `results/score_summary.json` and
@@ -624,8 +624,8 @@ Two persistent series can show a large sample correlation by chance, and a boots
 pairs together cannot reveal it. The rotation null breaks the alignment between proxy and truth while keeping each
 series' persistence and the cross-market structure:
 
-1. Draw an integer k uniformly from 60 to T − 61, where T is the number of panel dates. This is the registered range
-   "between 60 and T − 60" with the upper end excluded, as numpy draws it. With 121 dates or fewer, k is always 60.
+1. Draw an integer k uniformly from 60 to T - 61, where T is the number of panel dates. This is the registered range
+   "between 60 and T - 60" with the upper end excluded, as numpy draws it. With 121 dates or fewer, k is always 60.
 2. Shift the whole truth matrix circularly by k rows, the same k for every market.
 3. Recompute z̄ with the usual rule (markets with at least 60 paired days after the shift).
 
@@ -647,7 +647,7 @@ regressed on the proxy:
 ```
 
 The standard error is clustered two ways, by market and by date (Cameron, Gelbach and Miller: the market-clustered
-variance plus the date-clustered variance minus the variance clustered by market-date cell, each with a G ÷ (G − 1)
+variance plus the date-clustered variance minus the variance clustered by market-date cell, each with a G ÷ (G - 1)
 factor), computed on the demeaned regression and checked against statsmodels in the tests. It is undefined when the
 combined variance is not positive. The slope needs at least 10 observations, 2 markets, 2 dates and a non-constant
 proxy. It is in raw units: truth per unit of proxy.
@@ -667,7 +667,7 @@ Each confirmatory proxy gets one verdict against ni(non_mm). The expected sign i
 |---|---|
 | confirmed | z̄ > 0, Holm-adjusted p < 0.05, \|z̄\| > rot95, and sign(β) = sign(z̄) |
 | reversed | z̄ < 0, with the same three tests |
-| uninformative | not confirmed or reversed, and the 90% interval of ρ̄ lies strictly inside (−0.10, +0.10) |
+| uninformative | not confirmed or reversed, and the 90% interval of ρ̄ lies strictly inside (-0.10, +0.10) |
 | inconclusive | none of the above |
 
 Confirmed and reversed require z̄, the Holm p-value, rot95 and β all to be defined. "Uninformative" is an
@@ -676,7 +676,7 @@ reads as rejecting |ρ̄| ≥ 0.10 at the 5% level. It uses the unadjusted inter
 tests.
 
 **Holm.** The seven bootstrap p-values are adjusted together, a missing value counting as 1. Sort them,
-p(1) ≤ … ≤ p(7). The adjusted value of the j-th is the maximum over i ≤ j of min(1, (8 − i) × p(i)).
+p(1) ≤ … ≤ p(7). The adjusted value of the j-th is the maximum over i ≤ j of min(1, (8 - i) × p(i)).
 
 The table is written to `results/binance/primary_family.csv` and `primary_family.json`, under the Binance licence,
 because the family includes Binance proxies and its common support depends on them.
@@ -709,7 +709,7 @@ replicates, the same block length, and seeds 20261119 and 20261120. A half-sampl
 deviation of that half's replicate z̄*.
 
 - **Unstable.** A confirmed or reversed proxy is labelled unstable if its two half-sample z̄ differ in sign, or if
-  |z̄₁ − z̄₂| ≥ 1.96 × sqrt(se₁² + se₂²). The label does not change the verdict.
+  |z̄₁ - z̄₂| ≥ 1.96 × sqrt(se₁² + se₂²). The label does not change the verdict.
 - **Kill criterion 4.** Over the proxies that are confirmed or reversed, compute Kendall's τ (tau-b) between the
   first-half and second-half signed z̄. τ is computed only if there are at least 3 such proxies; otherwise the
   result is "no ranking claimed". A ranking is claimed only if τ ≥ 0.40. The criterion governs ranking claims only,
@@ -727,12 +727,12 @@ Every (proxy, truth, cohort) row reports:
 |---|---|
 | Levels ρ, 95% interval, p | sections 10 and 11 on the row's support (the primary family's common support on the primary panel; pairwise support on the all-market panel), with a block length chosen for that pair by the same rule and the seed 20261117 plus the row's position in its grid |
 | Changes ρ | the same statistic on day-over-day changes of proxy and truth, differenced only between consecutive dates; no bootstrap |
-| Cross-sectional ρ | on each day with at least 10 markets, Spearman across markets; the Fama–MacBeth mean over days, with a Newey–West standard error (Bartlett kernel, 10 lags, no small-sample factor) and a normal p-value; needs 3 days |
+| Cross-sectional ρ | on each day with at least 10 markets, Spearman across markets; the Fama-MacBeth mean over days, with a Newey-West standard error (Bartlett kernel, 10 lags, no small-sample factor) and a normal p-value; needs 3 days |
 | OI-weighted ρ | the per-market ρ_m averaged on the z scale with weights equal to each market's mean open interest over the cohort's eligible cells, then tanh |
 | FE slope | section 13, on the row's support |
 | Pinned share (funding rows) | the mean share of pinned hours (or Binance settlements at the floor) over the market-days scored |
 | Sign agreement (signed truths) | share of market-days with both values nonzero on which sign(proxy) = expected sign × sign(truth), with a Wilson 95% interval |
-| Placebo ρ | the levels statistic, without bootstrap, with the truth shifted 60 calendar days forward (the proxy on D meets the truth of D − 60) and 60 back (the truth of D + 60) within each market; the Fisher mean of the two |
+| Placebo ρ | the levels statistic, without bootstrap, with the truth shifted 60 calendar days forward (the proxy on D meets the truth of D - 60) and 60 back (the truth of D + 60) within each market; the Fisher mean of the two |
 | Tail lift (signed truths) | in each market with at least 20 pairs, the events are days with the proxy (times the expected sign) at or above its 90th percentile or at or below its 10th; a hit is the truth at or above its 80th percentile, or at or below its 20th, in the same direction; lift = pooled hits ÷ events ÷ 0.20, so 1 is no lift and 5 is perfect |
 
 The grids:
@@ -752,7 +752,7 @@ The exclusions of section 8 apply throughout. Primary-panel rows are scored on t
 the rows for the confirmatory proxies against ni(non_mm) still use their own block lengths and bootstrap draws, so
 their intervals need not equal the primary family's.
 
-**Benjamini–Hochberg.** Rows are flagged within each grid of the table above (the positive-control file holds two
+**Benjamini-Hochberg.** Rows are flagged within each grid of the table above (the positive-control file holds two
 one-row grids, one per panel), on the levels p-value at q = 0.05, a missing value counting as 1. With the m p-values
 sorted, k* is the largest k with p(k) ≤ k × 0.05 ÷ m, and every row with p ≤ p(k*) is flagged. A grid is flagged as a
 whole and then split by licence: its rows with a Binance proxy go to `results/binance/` under the same file name, the
@@ -774,7 +774,7 @@ inside the window:
 
 ```
 fwd_liq_intensity = liquidated notional ÷ OI notional at D
-fwd_liq_signed    = (long liquidated − short liquidated) ÷ (long liquidated + short liquidated)
+fwd_liq_signed    = (long liquidated - short liquidated) ÷ (long liquidated + short liquidated)
 ```
 
 A window that touches any UTC date without an archived fill file is dropped. `fwd_liq_intensity` needs positive open
@@ -789,11 +789,11 @@ on eligible market-days that have a non_mm cell; comovement is measured against 
 - Signed predictors (the 5 native directional proxies, and ni, ai and lwi) are scored against `fwd_liq_signed`.
 
 Each pair is scored by the daily cross-sectional Spearman correlation across markets (days with at least 10
-markets), averaged over days, with a Newey–West standard error (10 lags) and a normal p-value; it needs 3 days.
+markets), averaged over days, with a Newey-West standard error (10 lags) and a normal p-value; it needs 3 days.
 Scoring each day across markets removes market-wide days, as day fixed effects would. Every unsigned row is also
 reported as a partial correlation controlling for `rv_7d`: within each day, the ranks of predictor and target are
 each regressed on the rank of `rv_7d` (with an intercept), and the residuals are correlated. The registered rows
-are flagged with Benjamini–Hochberg at q = 0.05, on the p-value of the plain (not partial) correlation. Rows with
+are flagged with Benjamini-Hochberg at q = 0.05, on the p-value of the plain (not partial) correlation. Rows with
 `variant` "complete windows" rescore the two flow proxies on complete seven-day windows only (deviation 4); they
 are a sensitivity check and are not flagged.
 
@@ -802,7 +802,7 @@ highest mean daily cross-sectional Spearman against `fwd_liq_intensity` on one h
 is the mean over days of the daily ρ of fragile_share(non_mm) minus the daily ρ of the chosen proxy, over days on
 which both exist. On a given day both correlations use the same markets: those where fragile_share, the proxy and
 the outcome are all present. The 95% interval comes from a circular block bootstrap of the daily differences with a fixed block of 20
-days (`bootstrap_block_min`, not a Politis–White choice), 2,000 replicates and seed 20261117. Both directions are
+days (`bootstrap_block_min`, not a Politis-White choice), 2,000 replicates and seed 20261117. Both directions are
 reported.
 
 **dtl.** dtl (section 7) is published but the pipeline does not score it. It is never scored against
@@ -843,9 +843,9 @@ settlement date (`grading/transfer.previous_settlement`; the first settlement in
 | `si_change_pct` | FINRA's percent change in short interest since the previous settlement | negative |
 | `days_to_cover` | FINRA's days to cover | negative |
 | `log_short_interest` | ln(short interest in shares) | negative |
-| `funding_period` | mean hourly funding over [c − span, c) | positive |
-| `premium_period` | mean hourly premium over [c − span, c) | positive |
-| `momentum_period` | ln(P(c) ÷ P(c − span)) | positive |
+| `funding_period` | mean hourly funding over [c - span, c) | positive |
+| `premium_period` | mean hourly premium over [c - span, c) | positive |
+| `momentum_period` | ln(P(c) ÷ P(c - span)) | positive |
 | `comovement_30d` | as in section 8, within the stock group, ending at c | positive |
 
 The FINRA values are the same in both pairings. The perpetual-side proxies use the paired snapshot's cutoff, so
@@ -856,16 +856,16 @@ they differ between pairings. `funding_period` and `premium_period` have no mini
 projections), divide each by its standard deviation, and fit a slope through the origin. The result is a
 standardised two-way fixed-effects slope; because both variables are standardised, it equals the correlation of the
 two demeaned series. Its standard error is clustered by stock (CR1), and its 95% interval uses Student's t with
-G − 1 degrees of freedom, G being the number of stocks. A standard error clustered by stock and period is reported as
+G - 1 degrees of freedom, G being the number of stocks. A standard error clustered by stock and period is reported as
 a robustness check. `direction_as_expected` records whether the slope has the expected sign. The p-value (t with
-G − 1 degrees of freedom) is reported only if kill criterion 3 passes.
+G - 1 degrees of freedom) is reported only if kill criterion 3 passes.
 
 **Kill criterion 3.** Power is simulated for each pairing on the panel's actual stock × period pattern of observed
 cells, with seed 20261117. Each of 2,000 draws builds a proxy x and an error e as independent copies of one process: an
 AR(1) within stock with coefficient 0.5 and unit variance, plus a standard normal period shock common to all stocks,
-plus a standard normal stock effect. The truth is y = 0.2 × x + sqrt(1 − 0.2²) × e. The draw keeps only the observed
+plus a standard normal stock effect. The truth is y = 0.2 × x + sqrt(1 - 0.2²) × e. The draw keeps only the observed
 cells, removes stock and period means, fits the slope and rejects at 5% (two-sided) with a stock-clustered standard
-error and t(G − 1). Power is the share of draws that reject. Below 0.80, that pairing reports estimates and intervals
+error and t(G - 1). Power is the share of draws that reject. Below 0.80, that pairing reports estimates and intervals
 only. Kill criterion 3 covers the transfer only.
 
 Outputs: `results/finra/transfer_settlement.csv`, `transfer_publication.csv` and `transfer.json`.
@@ -887,7 +887,7 @@ Each perpetual is paired with the CFTC futures contract that carries the same ex
 | `BTC`, `ETH` | Bitcoin, Ether cash-settled (CME) | Traders in Financial Futures | leveraged funds |
 
 ```
-net_share = (group long − group short) ÷ total open interest        (futures-only reports)
+net_share = (group long - group short) ÷ total open interest        (futures-only reports)
 ```
 
 For the Traders in Financial Futures contracts, the asset managers' net share is reported in a second table.
@@ -904,18 +904,18 @@ multiple-testing correction and no verdict. Outputs: `results/cot_bridges.csv` a
 Registered in [§11 Gates and kill criteria](preregistration.md#11-gates-and-kill-criteria). Code:
 `gates/reconcile.py`, `gates/criteria.py`, `pipeline.py::stage_gates`.
 
-**Reconciliation (covers every result).** Every pair of snapshots on consecutive dates t − 1 and t in the archive,
+**Reconciliation (covers every result).** Every pair of snapshots on consecutive dates t - 1 and t in the archive,
 inside the evaluation window or not, is checked when the fill files for both dates exist. All accounts are included,
 protocol accounts too. For each address and market:
 
 ```
-Δ = size_t − size_{t−1}                (an absent position counts as zero)
-F = Σ signed fill sizes (buy +, sell −) of perpetual fills timestamped in (capture_{t−1}, capture_t]
-reconciled if |Δ − F| ≤ 10⁻⁶ × max(|size_t|, |size_{t−1}|) + 10⁻⁹
+Δ = size_t - size_{t-1}                (an absent position counts as zero)
+F = Σ signed fill sizes (buy +, sell -) of perpetual fills timestamped in (capture_{t-1}, capture_t]
+reconciled if |Δ - F| ≤ 10⁻⁶ × max(|size_t|, |size_{t-1}|) + 10⁻⁹
 weight = max(|Δ|, |F|) × mark
 ```
 
-Fills are read from the dates of both captures and from t − 1 and t. The mark is the current snapshot's, or the
+Fills are read from the dates of both captures and from t - 1 and t. The mark is the current snapshot's, or the
 previous one's for a market that disappeared; a row in a market with no mark in either snapshot carries zero weight.
 A change without fills and fills without a change are both mismatches. The share of reconciled weight is pooled over
 all pairs, and the gate passes at 0.99 or more. The share is also reported for market-maker addresses (every address
@@ -924,7 +924,7 @@ for evaluation dates, so pairs on dates without a set, including every pair outs
 wholly under everyone else.
 
 **Gate 0 (covers every result).** Each trade has one maker and one taker, so the two notionals must match. For each
-market, on any dex, and each fill day with nonzero volume, gap = |taker notional − maker notional| ÷ max(taker
+market, on any dex, and each fill day with nonzero volume, gap = |taker notional - maker notional| ÷ max(taker
 notional, maker notional). The gate passes if at least 99% of market-days have a gap of at most 1%.
 
 The gates run right after the truth stage (`herdbench build all`). If either gate fails, `results/gates.json`
@@ -937,7 +937,7 @@ The pre-registration ties the label to the reconciliation gate; applying it when
 their first and last day with an archived fill, against a bar of 25. The pre-registration records that it is known
 to fail (21 against 25).
 
-**Not run.** The Barone–Lillo TWAP appendix, which gated nothing, was not run (deviation 1). Kill criteria 5 to 7 of
+**Not run.** The Barone-Lillo TWAP appendix, which gated nothing, was not run (deviation 1). Kill criteria 5 to 7 of
 the original plan are not code and are not assessed. The pre-registration's 10-pair reconciliation sample was an
 integrity check made before registration; for the full-archive gate results, see [docs/results.md](results.md).
 
@@ -1011,7 +1011,7 @@ section shown.
 | Transfer model | at least 10 rows, 3 stocks, a non-constant proxy | `grading/transfer.py::transfer_stats` | 19 |
 | CFTC contract map | 14 contracts | `sources/cftc.py::BRIDGE`, `fetch.py::EXTRA_COT` | 20 |
 | Bridge timing and minimum | first capture at or after 00:00 UTC the day after the report date; at least 8 weeks | `grading/bridges.py` | 20 |
-| Reconciliation tolerance | 10⁻⁶ × max(\|size_t\|, \|size_{t−1}\|) + 10⁻⁹ | `gates/reconcile.py` | 21 |
-| Open-interest timing guard | the D − 1 and D − 8 snapshots must be captured before the cutoff of D | `pipeline.py::oi_timing` | 8 |
+| Reconciliation tolerance | 10⁻⁶ × max(\|size_t\|, \|size_{t-1}\|) + 10⁻⁹ | `gates/reconcile.py` | 21 |
+| Open-interest timing guard | the D - 1 and D - 8 snapshots must be captured before the cutoff of D | `pipeline.py::oi_timing` | 8 |
 | Pinned-share column per funding proxy | `funding_24h` → `pinned_share_24h`, `funding_7d` → `pinned_share_7d`, `bn_funding_24h` → `bn_pinned_share_24h` | `pipeline.py::PINNED` | 8 |
 | Funding cross-check sample | BTC, ETH, SOL, HYPE, xyz:NVDA; one seeded 2-day window each; agreement to 10⁻¹² | `pipeline.py::check_funding` | 3 |

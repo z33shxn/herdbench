@@ -4,6 +4,7 @@ Using the published results (no downloads):
   info      what the bundled truth panel covers
   panel     export the truth panel (CSV or Parquet)
   grade     score your own signal against the panel, with the study's baselines
+  visuals   draw the README images (animated SVG) from a results folder
 
 Reproducing the study (downloads about 25 GB; see docs/reproduce.md):
   fetch     download every input
@@ -185,6 +186,15 @@ def cmd_report(args) -> int:
     return 0
 
 
+def cmd_visuals(args) -> int:
+    from herdbench import visuals
+    from herdbench.config import results_dir
+
+    written = visuals.build(Path(args.results) if args.results else results_dir(), Path(args.out))
+    print(f"wrote {len(written)} images to {args.out}")
+    return 0
+
+
 def cmd_check(args) -> int:
     from herdbench import pipeline
 
@@ -284,6 +294,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--out", default="docs/results.md")
     p.add_argument("--figures", help="folder for the figures (default: figures/ next to --out)")
     p.set_defaults(func=cmd_report)
+
+    p = sub.add_parser("visuals", help="draw the README images from a results folder")
+    p.add_argument("--results", help="results folder (default: HERDBENCH_RESULTS_DIR or ./results)")
+    p.add_argument("--out", default="docs/visuals", help="folder for the images (default: docs/visuals)")
+    p.set_defaults(func=cmd_visuals)
 
     p = sub.add_parser("check", help="cross-check the funding inputs against Hyperliquid's API (network)")
     data_opts(p)

@@ -21,7 +21,7 @@ liquidations, exchange long/short ratios, short interest) track how traders are 
 The test runs on Hyperliquid, a derivatives venue where every account's open position is public, so
 positioning is observed for all accounts rather than inferred. Because every long has a short, the net
 position of all accounts is zero. The primary truth is therefore the net positioning of the crowd that
-remains after removing market makers and protocol accounts: `ni(non_mm) = −(market-maker net + protocol
+remains after removing market makers and protocol accounts: `ni(non_mm) = -(market-maker net + protocol
 net) ÷ non_mm gross`. It is called **net positioning**; "crowding" is kept for the unsigned truths.
 
 The study measures agreement. It makes **no causal claim**, estimates no crowding "wedge" or capacity
@@ -91,7 +91,7 @@ entity's sub-account positions are netted.
 | `top_av_lag_days` | 8 | ...measured 8 days before the snapshot (so a rally cannot promote longs through unrealised profit)... |
 | `top_av_lag_max_days` | 14 | ...or at the latest snapshot 8 to 14 days before; an entity without one is not ranked |
 | `style_window_days` | 30 | Trend score uses flows dated in the 30 days before the snapshot |
-| `trend_threshold` | 0.2 | Trend followers score at least +0.20; contrarians at most −0.20 |
+| `trend_threshold` | 0.2 | Trend followers score at least +0.20; contrarians at most -0.20 |
 | `style_min_flows` | 5 | A trend score needs at least 5 nonzero position changes |
 | `cohorts` | all, non_mm, top_av, trend, contrarian | Published cohorts |
 | `robustness_cohorts` | non_mm_s070, non_mm_s090, non_mm_t020, non_mm_t100 | Analysis-only cohorts |
@@ -116,7 +116,7 @@ snapshot-to-snapshot log return r.
 | `primary_cohort` | non_mm | Primary cohort |
 | `primary_truth` | ni | Primary truth metric (net positioning) |
 
-`ni` = (L − S)/(L + S) on entity notional; `ai` = (entities long − entities short)/entities; `lwi` weights
+`ni` = (L - S)/(L + S) on entity notional; `ai` = (entities long - entities short)/entities; `lwi` weights
 each holding by the entity's effective leverage. `ni(all)` is not zero: it is the protocol accounts' book,
 negated. `ai(all)` counts entities, so it barely depends on where the market-maker line falls; it is printed
 next to every primary row.
@@ -135,17 +135,17 @@ next to every primary row.
 | `comovement_min_returns` | 20 | ...needing at least 20 valid returns |
 
 **Cutoff.** Each snapshot's cutoff c is the last full UTC hour at or before its capture time. Every proxy for
-that snapshot uses only data stamped before c: funding and premium in [c − 24h, c) or [c − 7d, c); prices,
+that snapshot uses only data stamped before c: funding and premium in [c - 24h, c) or [c - 7d, c); prices,
 volume and liquidations from fills before c; open interest from the snapshots one and eight days earlier
-(never the snapshot being scored); Binance rows stamped before c. `momentum_7d` = ln P(c)/P(c − 7d);
-`oi_flow_7d` = sign(momentum_7d) × ln(OI_{D−1}/OI_{D−8}); `bn_taker_ls` = ln(Σ taker buys ÷ Σ taker sells)
-over Binance 5-minute klines in [c − 24h, c). "Basis" equals the premium on this venue, so it is scored once.
+(never the snapshot being scored); Binance rows stamped before c. `momentum_7d` = ln P(c)/P(c - 7d);
+`oi_flow_7d` = sign(momentum_7d) × ln(OI_{D-1}/OI_{D-8}); `bn_taker_ls` = ln(Σ taker buys ÷ Σ taker sells)
+over Binance 5-minute klines in [c - 24h, c). "Basis" equals the premium on this venue, so it is scored once.
 A premium that scores at least as well as funding is mechanical, since funding is a clamped premium.
 
 **Primary panel.** All proxies are scored on the same market-days: a day is dropped for every proxy if any
 confirmatory proxy or the truth is missing, and a market needs at least 60 such days. The all-market panel is
 a secondary table. momentum_7d and oi_flow_7d are never scored against the trend or contrarian cohorts, which
-are defined by that same flow–return relation; momentum_7d against ni(trend) is a positive control (above 0
+are defined by that same flow-return relation; momentum_7d against ni(trend) is a positive control (above 0
 expected; at or below 0 flags a pipeline error). Cross-venue agreement is reported separately:
 bn_global_ls against ai(all), bn_top_account_ls against ai(top_av), bn_top_position_ls against ni(top_av).
 
@@ -154,15 +154,15 @@ bn_global_ls against ai(all), bn_top_account_ls against ai(top_av), bn_top_posit
 | Field | Value | Meaning |
 |---|---|---|
 | `min_market_days` | 60 | A market enters a time-series statistic only with at least 60 days |
-| `bootstrap_block_min` | 20 | Block length: the median Politis–White optimal block across the panel's series, at least 20... |
+| `bootstrap_block_min` | 20 | Block length: the median Politis-White optimal block across the panel's series, at least 20... |
 | `bootstrap_block_max` | 40 | ...and at most 40 days |
 | `bootstrap_reps` | 2000 | Circular block bootstrap replications; date draws are shared by all proxies |
 | `seed` | 20261117 | Random seed for every resampling step |
-| `nw_lags` | 10 | Newey–West lags |
+| `nw_lags` | 10 | Newey-West lags |
 | `min_xs_markets` | 10 | A day enters a cross-sectional statistic only with at least 10 markets |
 | `placebo_shift_days` | 60 | Placebo: truth shifted by ±60 days within market |
 | `rotation_draws` | 1000 | Rotation null draws: every market's truth shifted by the same random number of dates... |
-| `rotation_min_shift` | 60 | ...between 60 and T − 60 |
+| `rotation_min_shift` | 60 | ...between 60 and T - 60 |
 | `equivalence_bound` | 0.1 | "Uninformative" when the 90% interval lies inside ±0.10 (two one-sided tests) |
 | `holm_alpha` | 0.05 | Holm-adjusted significance level for the confirmatory family |
 | `rank_dominance` | 0.95 | "A beats B" only if A outranks B in at least 95% of bootstrap draws |
@@ -176,17 +176,17 @@ across markets on Fisher's z scale (z̄, equal weights), with a 95% bootstrap in
 
 **Verdict.** *Confirmed*: expected sign, Holm p < 0.05, |z̄| above the 95th percentile of the rotation null, and a
 two-way fixed-effects slope (clustered by market and date) of the same sign. *Reversed*: the same tests with the
-opposite sign. *Uninformative*: the 90% interval lies inside (−0.10, +0.10). *Inconclusive*: none of these.
+opposite sign. *Uninformative*: the 90% interval lies inside (-0.10, +0.10). *Inconclusive*: none of these.
 Proxies are ranked by |z̄| with the sign shown, each with a 95% rank interval from the same bootstrap draws.
 
 **Stability.** The primary panel's dates are split at their median into two chronological halves. A confirmed or
 reversed proxy that changes sign between halves, or whose half-sample z̄ differ by at least 1.96 standard errors
 of the difference, is labelled unstable. Kendall τ between the signed-z̄ rankings governs ranking claims only.
 
-**Secondary statistics.** The same statistic on daily changes; daily cross-sectional Spearman with a Fama–MacBeth
-mean and Newey–West error; an open-interest-weighted mean of the market correlations; the two-way fixed-effects
+**Secondary statistics.** The same statistic on daily changes; daily cross-sectional Spearman with a Fama-MacBeth
+mean and Newey-West error; an open-interest-weighted mean of the market correlations; the two-way fixed-effects
 slope; sign agreement with a Wilson interval; the placebo; tail lift. Secondary grids are flagged with
-Benjamini–Hochberg at q = 0.05 and labelled exploratory.
+Benjamini-Hochberg at q = 0.05 and labelled exploratory.
 
 ## 9. Second target: later liquidations
 
@@ -197,7 +197,7 @@ Benjamini–Hochberg at q = 0.05 and labelled exploratory.
 Liquidated notional counts fills where the archive marks the account as the liquidated party; a window that
 touches a missing fill day is dropped. Unsigned proxies and truths are scored with daily cross-sectional Spearman
 correlations, and every such result is also reported as a partial correlation controlling for rv_7d (realised
-volatility of hourly returns before the cutoff). Signed ones are scored against (long − short)/(long + short)
+volatility of hourly returns before the cutoff). Signed ones are scored against (long - short)/(long + short)
 liquidated notional. Δρ compares fragile_share with the best unsigned proxy chosen on one half and scored on the
 other (both directions), with a block-bootstrap interval. Days-to-liquidate (dtl = |non_mm net notional| ÷ mean
 daily volume) is published but never scored against oi_to_volume_7d, which shares its denominator.

@@ -8,7 +8,7 @@ Quick start::
     print(report)
 """
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 from herdbench.api import GradeReport, grade, load_proxies, load_truth_panel
 

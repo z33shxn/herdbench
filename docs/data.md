@@ -178,7 +178,7 @@ information as of T + 5 minutes, and a ratio more than 60 minutes old at the cut
 | Traders in Financial Futures | Leveraged funds; asset managers as a second group | E-mini S&P 500, Nasdaq-100 mini, Euro FX, Japanese yen, British pound, Bitcoin, Ether cash-settled (CME) |
 
 Fields read: report date, total open interest, and each group's long and short positions. Net share is
-(long − short) / open interest. One Parquet file per contract is stored under `raw/cftc/`; it is a parsed extract,
+(long - short) / open interest. One Parquet file per contract is stored under `raw/cftc/`; it is a parsed extract,
 not the API response.
 
 - **Terms:** US government work, in the public domain.

@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import logging
 import math
+import re
 from collections.abc import Sequence
 from pathlib import Path
 from types import SimpleNamespace
@@ -41,10 +42,45 @@ DARK = {
 }
 
 
+#: Display names for the figures. Tables keep the code names, which the API and the CSV files use.
+LABELS = {
+    "premium_24h": "Premium, 24h",
+    "momentum_7d": "Momentum, 7d",
+    "oi_flow_7d": "Open-interest flow, 7d",
+    "funding_24h": "Funding, 24h",
+    "funding_7d": "Funding, 7d",
+    "abs_premium_24h": "Absolute premium, 24h",
+    "oi_change_7d": "Open-interest change, 7d",
+    "liq_intensity_7d": "Liquidations, 7d",
+    "oi_to_volume_7d": "Open interest to volume, 7d",
+    "comovement_30d": "Comovement, 30d",
+    "rv_7d": "Realised volatility, 7d",
+    "bn_global_ls": "Binance global long/short",
+    "bn_top_account_ls": "Binance top accounts long/short",
+    "bn_top_position_ls": "Binance top positions long/short",
+    "bn_taker_ls": "Binance taker buy/sell",
+    "bn_oi_change_7d": "Binance open-interest change, 7d",
+    "bn_funding_24h": "Binance funding, 24h",
+    "si_change_pct": "Short-interest change, %",
+    "days_to_cover": "Days to cover",
+    "log_short_interest": "Short interest (log)",
+    "funding_period": "Funding over the period",
+    "premium_period": "Premium over the period",
+    "momentum_period": "Momentum over the period",
+}
+COHORTS = {"non_mm": "market makers removed", "top_av": "largest accounts", "all": "all accounts"}
+PANELS = {"all_markets": "all markets", "primary": "primary"}
+
+
+def label(code: str) -> str:
+    """The display name of a proxy (the code name with spaces when there is none)."""
+    return LABELS.get(code, code.replace("_", " "))
+
+
 # ------------------------------------------------------------------------------------------ formatting
 def num(x, nd: int = 3) -> str:
     if x is None or (isinstance(x, float) and math.isnan(x)):
-        return "–"
+        return "n/a"
     if isinstance(x, (bool,)):
         return "yes" if x else "no"
     if isinstance(x, (int,)) and not isinstance(x, bool):
@@ -54,13 +90,13 @@ def num(x, nd: int = 3) -> str:
 
 def pval(x) -> str:
     if x is None or (isinstance(x, float) and math.isnan(x)):
-        return "–"
+        return "n/a"
     return "<0.001" if x < 0.001 else f"{x:.3f}"
 
 
 def interval(lo, hi, nd: int = 3) -> str:
     if any(v is None or (isinstance(v, float) and math.isnan(v)) for v in (lo, hi)):
-        return "–"
+        return "n/a"
     return f"[{lo:.{nd}f}, {hi:.{nd}f}]"
 
 
@@ -118,6 +154,7 @@ def forest(
             {
                 "svg.fonttype": "none",
                 "svg.hashsalt": "herdbench",
+                "axes.unicode_minus": False,
                 "font.family": ["Segoe UI", "Helvetica Neue", "DejaVu Sans", "sans-serif"],
             }
         )
@@ -192,11 +229,14 @@ def forest(
         fig.tight_layout()
         out = stem.with_name(f"{stem.name}-{mode}.svg")
         fig.savefig(out, format="svg", facecolor=c["surface"], metadata={"Date": None}, bbox_inches="tight")
-        out.write_bytes(out.read_bytes().replace(b"\r\n", b"\n"))  # LF on every platform, like every other output
+        svg = out.read_bytes().decode("utf-8").replace("\r\n", "\n")  # LF on every platform
+        svg = re.sub(r'(id="|href="#|url\(#)([^"\)]*)', lambda m: m.group(1) + m.group(2).replace("_", "-"), svg)
+        out.write_bytes(svg.encode("utf-8"))  # ids without underscores, like every other image
         plt.close(fig)
     rel = f"figures/{stem.name}"
     return (
         f'<picture>\n  <source media="(prefers-color-scheme: dark)" srcset="{rel}-dark.svg">\n'
+        f'  <source media="(prefers-color-scheme: light)" srcset="{rel}-light.svg">\n'
         f'  <img alt="{title}" src="{rel}-light.svg" width="760">\n</picture>'
     )
 
@@ -248,7 +288,7 @@ def _gates(results: Path) -> str:
             if k4.get("passed") is None
             else ("pass" if k4["passed"] else "fail: no ranking claimed")
         )
-        tau = "–" if k4.get("tau") is None else f"{k4['tau']:.3f}"
+        tau = "n/a" if k4.get("tau") is None else f"{k4['tau']:.3f}"
         rows.append(
             ["Kill criterion 4 (ranking claims)", f"Kendall τ between half-sample rankings {tau}", "≥ 0.40", status]
         )
@@ -273,9 +313,9 @@ def _primary(results: Path, figures: Path | None) -> str:
     rows = []
     for r in _records(t):
         rank = (
-            f"{int(r.rank)} [{int(r.rank_lo)}–{int(r.rank_hi)}]"
+            f"{int(r.rank)} [{int(r.rank_lo)}, {int(r.rank_hi)}]"
             if not pd.isna(getattr(r, "rank", float("nan")))
-            else "–"
+            else "n/a"
         )
         rows.append(
             [
@@ -291,9 +331,12 @@ def _primary(results: Path, figures: Path | None) -> str:
             ]
         )
     fig = forest(
-        [{"label": r.proxy, "est": r.rho, "lo": r.ci_low, "hi": r.ci_high, "note": r.verdict} for r in _records(t)],
+        [
+            {"label": label(r.proxy), "est": r.rho, "lo": r.ci_low, "hi": r.ci_high, "note": r.verdict}
+            for r in _records(t)
+        ],
         _stem(figures, "primary"),
-        "Primary family: proxy vs ni(non_mm)",
+        "Primary family: each proxy against ni (market makers removed)",
         "Mean within-market Spearman ρ with 95% block-bootstrap interval (shaded: ±0.10)",
         band=0.10,
     )
@@ -353,12 +396,17 @@ def _checks(results: Path, figures: Path | None) -> str:
                     "`momentum_7d` vs ni(trend)",
                     num(r.rho),
                     interval(r.ci_low, r.ci_high),
-                    num(r.n_markets) if not pd.isna(r.n_markets) else "–",
+                    num(r.n_markets) if not pd.isna(r.n_markets) else "n/a",
                     "above 0 as required" if r.rho > 0 else "**at or below 0: pipeline error flag**",
                 ]
             )
             fig_rows.append(
-                {"label": f"momentum_7d vs ni(trend), {r.panel}", "est": r.rho, "lo": r.ci_low, "hi": r.ci_high}
+                {
+                    "label": f"{label('momentum_7d')} vs ni (trend), {PANELS.get(r.panel, r.panel)}",
+                    "est": r.rho,
+                    "lo": r.ci_low,
+                    "hi": r.ci_high,
+                }
             )
     if cv is not None:
         for r in _records(cv):
@@ -373,7 +421,12 @@ def _checks(results: Path, figures: Path | None) -> str:
                 ]
             )
             fig_rows.append(
-                {"label": f"{r.proxy} vs {r.truth}({r.cohort})", "est": r.rho, "lo": r.ci_low, "hi": r.ci_high}
+                {
+                    "label": f"{label(r.proxy)} vs {r.truth} ({COHORTS.get(r.cohort, r.cohort)})",
+                    "est": r.rho,
+                    "lo": r.ci_low,
+                    "hi": r.ci_high,
+                }
             )
     if not rows:
         return "_Not run._"
@@ -449,7 +502,7 @@ def _sensitivity(results: Path) -> str:
                 r.panel,
                 f"`{r.proxy}`",
                 r.truth,
-                num(reg["rho"]) if reg is not None else "–",
+                num(reg["rho"]) if reg is not None else "n/a",
                 num(r.rho),
                 interval(r.ci_low, r.ci_high),
                 num(int(r.n_obs)),
@@ -472,7 +525,7 @@ def _liquidations(results: Path) -> str:
             num(r.se),
             pval(r.p_value),
             num(r.partial_rho_rv),
-            "yes" if r.bh_flag is True else ("no" if r.bh_flag is False else "–"),
+            "yes" if r.bh_flag is True else ("no" if r.bh_flag is False else "n/a"),
             getattr(r, "variant", "registered"),
         ]
         for r in _records(t)
@@ -518,7 +571,7 @@ def _transfer(results: Path, figures: Path | None) -> str:
         rows = [
             [
                 f"`{r.proxy}`",
-                "−" if r.expected_sign < 0 else "+",
+                "-" if r.expected_sign < 0 else "+",
                 num(r.beta),
                 interval(r.ci_low, r.ci_high),
                 pval(r.p_value),
@@ -529,13 +582,14 @@ def _transfer(results: Path, figures: Path | None) -> str:
         ]
         out += [table(rows, ["Proxy", "Expected", "β (std.)", "95% CI", "p", "Two-way s.e.", "N"], "lcrrrrr"), ""]
         fig_rows += [
-            {"label": r.proxy, "series": pairing, "est": r.beta, "lo": r.ci_low, "hi": r.ci_high} for r in _records(t)
+            {"label": label(r.proxy), "series": pairing, "est": r.beta, "lo": r.ci_low, "hi": r.ci_high}
+            for r in _records(t)
         ]
     if fig_rows:
         fig = forest(
             fig_rows,
             _stem(figures, "transfer"),
-            "US single-stock perps: equity-side proxies vs ni(non_mm)",
+            "US single-stock perps: equity-side proxies against ni (market makers removed)",
             "Two-way fixed-effects slope (standardised) with 95% interval, clustered by stock",
             series=("settlement", "publication"),
         )
@@ -637,7 +691,7 @@ def render(results: Path, figures: Path | None = None, deviations: Path | None =
         "## 5. Secondary statistics (exploratory)",
         "",
         "All-market panel (eligible main-dex markets with at least 60 days), cohort non_mm. Rows are flagged with "
-        "Benjamini–Hochberg at q = 0.05 within each grid. Full grids, every cohort: `results/*.csv` and "
+        "Benjamini-Hochberg at q = 0.05 within each grid. Full grids, every cohort: `results/*.csv` and "
         "`results/binance/*.csv`.",
         "",
         "**Directional proxies**",
