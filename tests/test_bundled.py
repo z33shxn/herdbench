@@ -63,9 +63,12 @@ def test_no_file_in_the_repository_names_a_non_protocol_address():
 
 def test_no_long_dash_or_minus_sign_in_any_tracked_text_file():
     """House style: plain hyphens only, so no en or em dash, horizontal bar or Unicode minus anywhere."""
+    import shutil
     import subprocess
     from urllib.parse import quote
 
+    if shutil.which("git") is None:
+        pytest.skip("git is not installed")
     listed = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True, text=True, check=False)
     if listed.returncode != 0:
         pytest.skip("not a git checkout")
@@ -78,3 +81,5 @@ def test_no_long_dash_or_minus_sign_in_any_tracked_text_file():
         text = path.read_text(encoding="utf-8", errors="ignore")
         assert not any(d in text for d in dashes), rel
         assert not any(e in text.upper() for e in encoded), rel
+        if path.suffix == ".svg":
+            assert "_" not in text, f"{rel}: an underscore in an image"

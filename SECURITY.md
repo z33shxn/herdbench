@@ -56,4 +56,4 @@ by `herdbench.sources.coinalyze` and used only for cross-source checks. No publi
 
 ## Supported versions
 
-Only the latest release receives security fixes. The current release is 1.0.0.
+Only the latest release receives security fixes.

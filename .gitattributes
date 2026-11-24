@@ -1,5 +1,6 @@
-# Text files are stored and checked out with LF line ends on every platform, so the published hashes
-# (pre-registration, addendum, results manifest) verify on Windows, macOS and Linux alike.
+# Text files are stored and checked out with LF line ends on every platform, so the published hashes (the
+# results manifest, the addendum, and the pre-registration as registered at commit f205501) verify on
+# Windows, macOS and Linux alike.
 * text=auto eol=lf
 *.parquet binary
 *.ots binary

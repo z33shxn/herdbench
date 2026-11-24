@@ -154,6 +154,15 @@ def test_manifest_hashes_every_published_file(built):
         assert pipeline.sha256_file(results / name) == digest
 
 
+def test_manifest_records_the_registered_preregistration_hash(built):
+    """The registered hash comes from the timestamp record; the working-tree copy's own hash sits beside it."""
+    root = pipeline.repo_root()
+    record = (root / "docs" / "timestamps" / "prereg-v1.txt").read_text(encoding="utf-8")
+    manifest = built["manifest"]
+    assert f"sha256(docs/preregistration.md) {manifest['preregistration_sha256']}" in record
+    assert manifest["preregistration_file_sha256"] == pipeline.sha256_file(root / "docs" / "preregistration.md")
+
+
 def test_scoring_refuses_to_run_without_the_addendum(built, tmp_path):
     with pytest.raises(RuntimeError, match="addendum"):
         pipeline.stage_score(built["paths"], P, addendum=tmp_path / "missing.md")

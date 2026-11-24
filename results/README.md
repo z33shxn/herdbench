@@ -1,7 +1,7 @@
 # Published results
 
 Everything here was produced by `herdbench build all` from public data, after the pre-analysis addendum was
-committed and timestamped. Every file's SHA-256 is in [`manifest.json`](manifest.json). The report that reads
+committed and timestamped. Every published data file's SHA-256 is in [`manifest.json`](manifest.json). The report that reads
 these files is [`docs/results.md`](../docs/results.md).
 
 | Path | Content | Licence |

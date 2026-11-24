@@ -1420,6 +1420,22 @@ def environment() -> dict:
     return out
 
 
+def registered_sha256(doc: Path) -> str | None:
+    """SHA-256 of the registered pre-registration, as its timestamp record states it.
+
+    The working-tree copy was retypeset in version 1.1.0 (en dashes and minus signs became hyphens), so its
+    own hash differs from the registered one; the manifest records both. Without the record, the file's own
+    hash stands in.
+    """
+    record = doc.parent / "timestamps" / "prereg-v1.txt"
+    if record.exists():
+        text = record.read_text(encoding="utf-8")
+        m = re.search(r"^sha256\(docs/preregistration\.md\) ([0-9a-f]{64})$", text, re.M)
+        if m:
+            return m.group(1)
+    return sha256_file(doc) if doc.exists() else None
+
+
 def sha256_file(path: Path) -> str:
     h = hashlib.sha256()
     with open(path, "rb") as fh:
@@ -1447,7 +1463,8 @@ def write_manifest(paths: Paths, prereg: PreRegistration = PREREG, addendum: Pat
         },
         "funding": {"dataset": "ironflow/hyperliquid-funding", "revision": ironflow.FUNDING_REVISION},
         "environment": environment(),
-        "preregistration_sha256": sha256_file(prereg_doc) if prereg_doc.exists() else None,
+        "preregistration_sha256": registered_sha256(prereg_doc),
+        "preregistration_file_sha256": sha256_file(prereg_doc) if prereg_doc.exists() else None,
         "addendum_sha256": sha256_file(addendum) if addendum.exists() else None,
         "results_sha256": files,
     }

@@ -106,7 +106,9 @@ These mechanisms keep the published files private and must stay intact:
 
 Data licences add a related rule: raw inputs are never redistributed. Statistics that use Binance Vision data go
 only to `results/binance/` (CC BY-NC-SA 4.0), statistics from FINRA short interest only to `results/finra/`, and
-the bundled proxy file holds no Binance-derived column. Tests check both.
+the bundled proxy file holds no Binance-derived column. Tests check both. A table or image that shows a Binance
+statistic carries CC BY-NC-SA 4.0 too: the report says so under its sections, and the images in `docs/visuals/`
+carry a notice.
 
 ## Rebuilding the results
 
@@ -117,6 +119,7 @@ herdbench fetch               # download every input
 herdbench build entities      # entity map from the venue's public API; resumable, takes hours
 herdbench build all           # truth, gates, proxies, publish, score, manifest
 herdbench report              # docs/results.md and its figures
+herdbench visuals             # the README images in docs/visuals (a test fails if they are stale)
 ```
 
 Inputs go to `./data` and results to `./results`. `HERDBENCH_DATA_DIR` and `HERDBENCH_RESULTS_DIR`, or the

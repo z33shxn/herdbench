@@ -60,8 +60,9 @@ pip install -e ".[report]"         # or ".[dev]", which adds the test tools
 - The `report` extra installs matplotlib for the report's figures. Without matplotlib, `herdbench report` writes
   tables only. The `dev` extra includes matplotlib.
 - Line endings are fixed by `.gitattributes`: every text file is stored and checked out with LF on every platform,
-  so the committed files match their SHA-256 in `results/manifest.json` and in `docs/timestamps/` on Windows too,
-  whatever `core.autocrlf` says. Every JSON and Markdown file HerdBench writes also uses LF.
+  so the results files and the addendum match their SHA-256 in `results/manifest.json` and `docs/timestamps/` on
+  Windows too, whatever `core.autocrlf` says. The pre-registration matches its record at commit `f205501` (the
+  copy in the working tree was retypeset in 1.1.0; see below). Every JSON and Markdown file HerdBench writes also uses LF.
 - Run every command from the repository root. The default folders are relative to the current directory.
 
 ## Folders and environment variables
@@ -271,7 +272,8 @@ selection with the bundled file, then delete `derived/primary_panel.json`.
 | `mirror` | Repository and pinned revision of the archive mirror. `listing_sha256` is the SHA-256 of `raw/hf/listing.json`, the mirror's file list in a canonical form (sorted, no timestamp) that `herdbench fetch` writes, so it is the same for everyone who lists the pinned revision. |
 | `environment` | Python, polars, pandas, NumPy, SciPy and pyarrow versions of the build |
 | `funding` | Ironflow dataset and pinned revision |
-| `preregistration_sha256` | SHA-256 of `docs/preregistration.md` |
+| `preregistration_sha256` | SHA-256 of the registered `docs/preregistration.md`, as `docs/timestamps/prereg-v1.txt` records it (the registered text is at commit `f205501`) |
+| `preregistration_file_sha256` | SHA-256 of the copy of `docs/preregistration.md` in the checkout that built the results. Since 1.1.0 it differs from the registered hash in typography only. Absent from manifests written before 1.1.1, such as the published one. |
 | `addendum_sha256` | SHA-256 of `docs/preregistration_addendum.md` |
 | `results_sha256` | SHA-256 of every file in the results folder, keyed by relative path. `manifest.json` itself is excluded. |
 

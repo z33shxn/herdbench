@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "herdbench"
-version = "1.1.0"
+version = "1.1.1"
 description = "Crowd signals, fact-checked: grade public crowding signals against the observed positions of every account on Hyperliquid."
 readme = "README.md"
 requires-python = ">=3.10"

@@ -66,8 +66,11 @@ def test_registered_documents_changed_only_in_typography_since_they_were_timesta
     """The registered texts were later edited for typography only: long dashes and minus signs became ASCII hyphens.
     The timestamped versions stay in git at the recorded commits; both facts are checked here."""
     import hashlib
+    import shutil
     import subprocess
 
+    if shutil.which("git") is None:
+        pytest.skip("git is not installed")
     root = DOC.parents[1]
     records = _records()
     assert {path for _, path, _ in records} == {"docs/preregistration.md", "docs/preregistration_addendum.md"}
@@ -78,4 +81,4 @@ def test_registered_documents_changed_only_in_typography_since_they_were_timesta
         assert hashlib.sha256(shown.stdout).hexdigest() == digest, path
         registered = shown.stdout.decode("utf-8")
         typeset = registered.replace(chr(0x2013), "-").replace(chr(0x2212), "-")
-        assert (root / path).read_text(encoding="utf-8") == typeset, path
+        assert (root / path).read_bytes() == typeset.encode("utf-8"), path

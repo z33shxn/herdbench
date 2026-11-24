@@ -36,6 +36,10 @@ Two rules hold for every source:
   files. HerdBench reads these two kinds of file and ignores everything else in the repository.
 - **Terms:** the repository declares no licence. HerdBench keeps the files local and never redistributes the
   snapshots or the fills.
+- **Coverage:** position snapshots from 28 August 2025 to 18 August 2026 on 305 dates. The mirror has no
+  snapshot from 25 October to 14 December 2025 (51 days), though fills continue, and no fill file on 38 days of
+  the period. Truth cells and proxies that need a missing snapshot or fill are missing, and the hero image on
+  the front page shows the snapshot gap as a gap.
 - **Code:** `src/herdbench/sources/hfmirror.py`, run by `herdbench fetch --only mirror`.
 
 | Files in the mirror | How HerdBench reads them | Stored as |
@@ -216,6 +220,7 @@ limit.
 | Native statistics (grids, positive control, robustness cohorts, complete-window sensitivity, liquidation target), the CFTC bridges, the gates, the funding cross-check, the truth-panel and score summaries, and the manifest | `results/*.csv`, `results/*.json` | CC BY 4.0 |
 | Every statistic that involves Binance Vision data, including the whole primary family | `results/binance/` | CC BY-NC-SA 4.0 |
 | Stock transfer statistics from FINRA short interest | `results/finra/` | FINRA's terms: summary statistics only, FINRA named as source and owner, non-commercial use |
+| README images | `docs/visuals/` | CC BY-NC-SA 4.0 for the images that show Binance-derived statistics (hero, scorecard, insights, share card); CC BY 4.0 for the rest |
 | Code | This repository and the `herdbench` package | Apache-2.0 ([`LICENSE`](../LICENSE), [`NOTICE`](../NOTICE)) |
 
 No result is reported on this page; for the published numbers, see [docs/results.md](results.md).
@@ -231,8 +236,10 @@ No result is reported on this page; for the published numbers, see [docs/results
 - In the repository, the two Parquet files are stored once, in `src/herdbench/data/`, where the package loads them;
   `results/manifest.json` lists their SHA-256 with every other published file. The package's Apache-2.0 licence
   covers its code; the data files bundled with it remain CC BY 4.0.
-- `docs/results.md` and the figures in `docs/figures/` are rendered from these files by `herdbench report`. A table
-  or figure drawn from `results/binance/` or `results/finra/` carries the terms of that folder.
+- `docs/results.md` and the figures in `docs/figures/` are rendered from these files by `herdbench report`, and
+  the README images in `docs/visuals/` by `herdbench visuals`. A table, figure or image drawn from
+  `results/binance/` or `results/finra/` carries the terms of that folder: the hero, scorecard, insights and
+  share-card images are CC BY-NC-SA 4.0 and say so; the other two images are CC BY 4.0.
 
 Attribution lines:
 

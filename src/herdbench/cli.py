@@ -4,12 +4,12 @@ Using the published results (no downloads):
   info      what the bundled truth panel covers
   panel     export the truth panel (CSV or Parquet)
   grade     score your own signal against the panel, with the study's baselines
-  visuals   draw the README images (animated SVG) from a results folder
 
 Reproducing the study (downloads about 25 GB; see docs/reproduce.md):
   fetch     download every input
   build     run pipeline stages: entities, truth, proxies, publish, score, gates, manifest, all
   report    render docs/results.md from a results folder
+  visuals   draw the README images (animated SVG) from a results folder, such as a clone's results/
   doctor    check the environment and which inputs are present
 """
 
@@ -190,7 +190,13 @@ def cmd_visuals(args) -> int:
     from herdbench import visuals
     from herdbench.config import results_dir
 
-    written = visuals.build(Path(args.results) if args.results else results_dir(), Path(args.out))
+    results = Path(args.results) if args.results else results_dir()
+    if not (results / "score_summary.json").exists():
+        raise SystemExit(
+            f"no results in {results}: pass --results, or run from a clone of the repository, whose results/ "
+            "folder holds the published results"
+        )
+    written = visuals.build(results, Path(args.out))
     print(f"wrote {len(written)} images to {args.out}")
     return 0
 

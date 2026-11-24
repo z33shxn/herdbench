@@ -1,23 +1,25 @@
 """README visuals: animated, theme-aware SVG images drawn from the published results.
 
-``herdbench visuals`` writes a light and a dark file for each image into ``docs/visuals``. Every number an image
-shows is read from ``results/`` when the images are built, and the hero image is drawn from the bundled truth
-panel, so the pictures cannot drift from the tables. Each file is plain SVG with CSS animation: no script, no
-external font or image, a ``prefers-reduced-motion`` rule that shows the final frame at once, and no underscore
-or long dash anywhere in the file (the tests check all of this).
+``herdbench visuals`` writes a light and a dark file for each image into ``docs/visuals``, plus a still share card.
+Every statistic an image shows is read from ``results/`` when the images are built, the hero's tapestry from the
+truth panel, and the timeline's times from constants that the tests check against ``docs/timestamps/README.md`` and
+the git history, so the pictures cannot drift from the record. Each file is plain SVG with CSS animation: no script,
+no external font or image, motion that settles within five seconds, a ``prefers-reduced-motion`` rule that shows the
+final frame at once, and no underscore or long dash anywhere in the file (the tests check all of this).
 
 Design system: the system sans, ink and surface tokens and the status palette of the data-visualisation rules
 used across the project; long and short positions use a blue and red diverging scale with a grey midpoint,
-stepped separately for the light and the dark surface.
+stepped separately for the light and the dark surface. Muted text clears WCAG AA contrast in both themes.
 """
 
 from __future__ import annotations
 
+import itertools
 import json
 import math
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from xml.sax.saxutils import escape
 
@@ -191,6 +193,7 @@ def _theme(
     raised: str,
     ink: str,
     ink2: str,
+    muted: str,
     grid: str,
     axis: str,
     border: str,
@@ -200,19 +203,22 @@ def _theme(
     pole: str,
 ) -> Theme:
     return Theme(
-        name=name, surface=surface, raised=raised, ink=ink, ink2=ink2, muted="#898781", grid=grid, axis=axis,
+        name=name, surface=surface, raised=raised, ink=ink, ink2=ink2, muted=muted, grid=grid, axis=axis,
         border=border, blue=blue, red=red, good="#0ca30c", warning="#fab219", critical="#d03b3b",
         on_warning="#0b0b0b", mid=mid, pos=ramp(mid, pole), neg=ramp(mid, with_lightness(red, pole)),
     )  # fmt: skip
 
 
+#: Muted text reaches 4.5:1 or more against both the card and the raised panels of its theme (WCAG AA).
 LIGHT = _theme(
-    "light", surface="#fcfcfb", raised="#f4f3ef", ink="#0b0b0b", ink2="#52514e", grid="#e1e0d9", axis="#c3c2b7",
-    border="rgba(11,11,11,0.10)", blue="#2a78d6", red="#e34948", mid="#f0efec", pole="#1c5cab",
+    "light", surface="#fcfcfb", raised="#f4f3ef", ink="#0b0b0b", ink2="#52514e", muted="#6e6c67",
+    grid="#e1e0d9", axis="#c3c2b7", border="rgba(11,11,11,0.10)", blue="#2a78d6", red="#e34948", mid="#f0efec",
+    pole="#1c5cab",
 )  # fmt: skip
 DARK = _theme(
-    "dark", surface="#1a1a19", raised="#222221", ink="#f0efec", ink2="#c3c2b7", grid="#2c2c2a", axis="#383835",
-    border="rgba(255,255,255,0.10)", blue="#3987e5", red="#e66767", mid="#383835", pole="#6da7ec",
+    "dark", surface="#1a1a19", raised="#222221", ink="#f0efec", ink2="#c3c2b7", muted="#959390",
+    grid="#2c2c2a", axis="#383835", border="rgba(255,255,255,0.10)", blue="#3987e5", red="#e66767", mid="#383835",
+    pole="#6da7ec",
 )  # fmt: skip
 THEMES = (LIGHT, DARK)
 
@@ -239,18 +245,38 @@ VERDICTS = {
     "reversed": ("Points the wrong way", "critical", "cross"),
 }
 
-#: When the study was fixed (docs/timestamps/README.md): the pre-registration's first Bitcoin anchor and the
-#: start of the first proxy-versus-truth computation.
+#: When the study was fixed (docs/timestamps/README.md): the pre-registration's first Bitcoin anchor, the start of
+#: the first proxy-versus-truth computation, and the results commit (42f6fa8).
 SEALED_BLOCK = 976_330
 SEALED_AT = datetime(2026, 11, 17, 22, 7, tzinfo=timezone.utc)
 SCORED_AT = datetime(2026, 11, 23, 14, 51, 57, tzinfo=timezone.utc)
-#: The results commit (42f6fa8).
-PUBLISHED_AT = datetime(2026, 11, 23, 15, 38, tzinfo=timezone.utc)
+PUBLISHED_AT = datetime(2026, 11, 23, 15, 38, 19, tzinfo=timezone.utc)
+
+#: Month names in English whatever the system locale, so the images are the same on every machine.
+MONTHS = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+
+def month(d: date, year: bool = True) -> str:
+    """``Sep 2025`` (or ``Sep``) without consulting the locale."""
+    return f"{MONTHS[d.month - 1]} {d.year}" if year else MONTHS[d.month - 1]
+
+
+def day(d: date) -> str:
+    """``25 Oct 2025`` without consulting the locale."""
+    return f"{d.day} {MONTHS[d.month - 1]} {d.year}"
+
+
+def stamp(t: datetime) -> str:
+    """``17 NOV 2026, 22:07 UTC`` without consulting the locale."""
+    return f"{t.day} {MONTHS[t.month - 1].upper()} {t.year}, {t.hour:02d}:{t.minute:02d} UTC"
+
 
 #: Scorecard title and the captions under the funding and liquidation figures.
 TITLE = "Which signals really know what the crowd holds?"
-CAPTION1 = "of hours stuck at the floor rate"
+CAPTION1 = "of hours pinned at the baseline rate"
 CAPTION3 = "correlation with next week's liquidations"
+#: Licence notice on every image that shows a statistic derived from Binance Vision data.
+NC_NOTICE = "Contains statistics derived from Binance Vision data: CC BY-NC-SA 4.0."
 
 
 @dataclass(frozen=True)
@@ -258,7 +284,7 @@ class Facts:
     family: tuple[dict, ...]
     markets: tuple[str, ...]
     days: int
-    market_days: int
+    snapshot_days: int | None
     pinned_share: float
     funding_rho: float
     premium_rho: float
@@ -272,23 +298,33 @@ class Facts:
         return sum(r["verdict"] == "confirmed" for r in self.family)
 
 
-def _row(df: pd.DataFrame, **match: str) -> pd.Series:
+def _csv(path: Path) -> pd.DataFrame | None:
+    return pd.read_csv(path) if path.exists() else None
+
+
+def _value(df: pd.DataFrame | None, column: str, **match: str) -> float:
+    """``column`` of the one row of ``df`` that matches; NaN when the file or the row is absent."""
+    if df is None:
+        return float("nan")
     mask = np.ones(len(df), dtype=bool)
     for k, v in match.items():
         mask &= (df[k] == v).to_numpy()
     rows = df[mask]
-    if len(rows) != 1:
-        raise ValueError(f"expected one row for {match}, found {len(rows)}")
-    return rows.iloc[0]
+    if len(rows) > 1:
+        raise ValueError(f"expected at most one row for {match}, found {len(rows)}")
+    return float(rows.iloc[0][column]) if len(rows) else float("nan")
 
 
 def load_facts(results: Path) -> Facts:
-    """Read every number the images show from a results folder."""
+    """Read every number the images show from a results folder; an optional figure that is absent reads as NaN."""
     summary = json.loads((results / "score_summary.json").read_text(encoding="utf-8"))
     family = pd.read_csv(results / "binance" / "primary_family.csv")
-    directional = pd.read_csv(results / "directional_primary.csv")
-    cross = pd.read_csv(results / "binance" / "cross_venue.csv")
-    liq = pd.read_csv(results / "liquidation_target.csv")
+    directional = _csv(results / "directional_primary.csv")
+    cross = _csv(results / "binance" / "cross_venue.csv")
+    liq = _csv(results / "liquidation_target.csv")
+    coverage = results / "truth_panel_summary.json"
+    snapshot_days = int(json.loads(coverage.read_text(encoding="utf-8"))["dates"]) if coverage.exists() else None
+    ordered = family.sort_values(["rho", "proxy"], ascending=[False, True], kind="mergesort")
     rows = tuple(
         {
             "proxy": str(r.proxy),
@@ -297,22 +333,21 @@ def load_facts(results: Path) -> Facts:
             "ci_high": float(r.ci_high),
             "verdict": str(r.verdict),
         }
-        for r in family.sort_values("rho", ascending=False).itertuples()
+        for r in ordered.itertuples()
     )
-    funding = _row(directional, proxy="funding_24h", truth="ni", cohort="non_mm")
-    premium = _row(family, proxy="premium_24h")
+    funding = {"proxy": "funding_24h", "truth": "ni", "cohort": "non_mm"}
     return Facts(
         family=rows,
         markets=tuple(summary["primary_markets"]),
         days=int(summary["n_common_days"]),
-        market_days=int(summary["primary_market_days"]),
-        pinned_share=float(funding["pinned_share"]),
-        funding_rho=float(funding["rho"]),
-        premium_rho=float(premium["rho"]),
-        heads_rho=float(_row(cross, proxy="bn_global_ls", truth="ai", cohort="all")["rho"]),
-        money_rho=float(_row(family, proxy="bn_global_ls")["rho"]),
-        fragile_rho=float(_row(liq, predictor="fragile_share", variant="registered")["rho"]),
-        past_liq_rho=float(_row(liq, predictor="liq_intensity_7d", variant="registered")["rho"]),
+        snapshot_days=snapshot_days,
+        pinned_share=_value(directional, "pinned_share", **funding),
+        funding_rho=_value(directional, "rho", **funding),
+        premium_rho=_value(family, "rho", proxy="premium_24h"),
+        heads_rho=_value(cross, "rho", proxy="bn_global_ls", truth="ai", cohort="all"),
+        money_rho=_value(family, "rho", proxy="bn_global_ls"),
+        fragile_rho=_value(liq, "rho", predictor="fragile_share", variant="registered"),
+        past_liq_rho=_value(liq, "rho", predictor="liq_intensity_7d", variant="registered"),
     )
 
 
@@ -336,13 +371,16 @@ _BASE_CSS = (
     ".fi{animation:fi .9s ease-out both}"
     "@keyframes fu{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}"
     "@keyframes fi{from{opacity:0}to{opacity:1}}"
-    + "".join(f".d{i}{{animation-delay:{i * 0.12:.2f}s}}" for i in range(1, 25))
 )
+#: Stagger delays. They follow each image's own rules, whose ``animation`` shorthand would otherwise reset them.
+_DELAYS = "".join(f".d{i}{{animation-delay:{i * 0.12:.2f}s}}" for i in range(1, 25))
 _REDUCED = "@media (prefers-reduced-motion:reduce){*{animation:none!important}}"
 
 
 def _num(v: float, digits: int = 2) -> str:
-    """A number with an ASCII hyphen-minus for negatives and no negative zero."""
+    """A number with an ASCII hyphen-minus for negatives, no negative zero, and ``n/a`` when it is missing."""
+    if math.isnan(v):
+        return "n/a"
     s = f"{v:.{digits}f}"
     return s[1:] if s.startswith("-") and float(s) == 0 else s
 
@@ -382,7 +420,7 @@ def _svg(w: int, h: int, title: str, desc: str, theme: Theme, css: str, body: st
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}" role="img" '
         f'aria-labelledby="title desc">'
         f'<title id="title">{escape(title)}</title><desc id="desc">{escape(desc)}</desc>'
-        f"<style>{_BASE_CSS}{css}{_REDUCED}</style>{card}{body}</svg>\n"
+        f"<style>{_BASE_CSS}{css}{_DELAYS}{_REDUCED}</style>{card}{body}</svg>\n"
     )
 
 
@@ -440,8 +478,14 @@ def _levels(theme: Theme) -> dict[int, str]:
     return {0: theme.mid, **{k: theme.pos[k - 1] for k in range(1, 6)}, **{-k: theme.neg[k - 1] for k in range(1, 6)}}
 
 
-def _cells(grid: np.ndarray, x0: float, y0: float, cw: float, pitch: float, ch: float, theme: Theme) -> str:
-    """The tapestry: one path per colour level, each subpath a run of equal-level days in one market's row."""
+def _cells(
+    grid: np.ndarray, x0: float, y0: float, cw: float, pitch: float, ch: float, theme: Theme, offsets: Sequence[int]
+) -> str:
+    """The tapestry: one path per colour level, each subpath a run of equal-level cells in one market's row.
+
+    ``offsets`` places each column on its calendar day, so a run stops at a missing date and a gap in the archive
+    stays a visible gap.
+    """
     rows, cols = grid.shape
     paths: dict[int, list[str]] = {}
     for r in range(rows):
@@ -453,34 +497,71 @@ def _cells(grid: np.ndarray, x0: float, y0: float, cw: float, pitch: float, ch: 
                 c += 1
                 continue
             lvl, start = _level(float(v)), c
-            while c < cols and not np.isnan(grid[r, c]) and _level(float(grid[r, c])) == lvl:
+            c += 1
+            while (
+                c < cols
+                and offsets[c] == offsets[c - 1] + 1
+                and not np.isnan(grid[r, c])
+                and _level(float(grid[r, c])) == lvl
+            ):
                 c += 1
-            x, run = x0 + start * cw, (c - start) * cw
+            x, run = x0 + offsets[start] * cw, (offsets[c - 1] - offsets[start] + 1) * cw
             paths.setdefault(lvl, []).append(f"M{x:.1f} {y:g}h{run:.1f}v{ch:g}h{-run:.1f}z")
     color = _levels(theme)
     return "".join(f'<path fill="{color[k]}" d="{"".join(paths[k])}"/>' for k in sorted(paths))
 
 
+def calendar(days: Sequence[date]) -> tuple[list[int], int]:
+    """Each date's offset in days from the first, and the number of calendar days the dates span."""
+    offsets = [(d - days[0]).days for d in days]
+    return offsets, offsets[-1] + 1
+
+
+def gaps(offsets: Sequence[int], min_days: int = 14) -> list[tuple[int, int]]:
+    """Runs of at least ``min_days`` calendar days without a snapshot: (offset of the first missing day, length)."""
+    return [(a + 1, b - a - 1) for a, b in itertools.pairwise(offsets) if b - a - 1 >= min_days]
+
+
+def _month_starts(days: Sequence[date], months: Sequence[int] = (9, 12, 3, 6)) -> list[date]:
+    """The first day of each listed month inside the dates' span."""
+    out, y, m = [], days[0].year, days[0].month
+    while date(y, m, 1) <= days[-1]:
+        if date(y, m, 1) >= days[0] and m in months:
+            out.append(date(y, m, 1))
+        y, m = (y + 1, 1) if m == 12 else (y, m + 1)
+    return out
+
+
+def _gap_text(days: Sequence[date]) -> str:
+    """``, none from 25 Oct 2025 to 14 Dec 2025`` for every gap in the snapshot dates (empty when there is none)."""
+    offsets, _ = calendar(days)
+    parts = [
+        f"{day(days[0] + timedelta(days=start))} to {day(days[0] + timedelta(days=start + n - 1))}"
+        for start, n in gaps(offsets)
+    ]
+    return f", none from {' or '.join(parts)}" if parts else ""
+
+
 def hero(theme: Theme, facts: Facts, grid: np.ndarray, days: Sequence[date]) -> str:
     w, h = 1200, 600
-    rows, cols = grid.shape
-    cw, pitch, ch = 1.9, 13, 11
-    x0, y0 = 1144 - cols * cw, 112
-    tw, th = cols * cw, rows * pitch - (pitch - ch)
+    rows = grid.shape[0]
+    offsets, span = calendar(days)
+    tw, pitch, ch = 579.5, 13, 11
+    cw = tw / span
+    x0, y0 = 1144 - tw, 112
+    th = rows * pitch - (pitch - ch)
     color = _levels(theme)
-    cells = _cells(grid, x0, y0, cw, pitch, ch, theme)
+    cells = _cells(grid, x0, y0, cw, pitch, ch, theme, offsets)
+    for start, n in gaps(offsets):  # an archive gap is labelled where it falls
+        cells += _t(x0 + (start + n / 2) * cw, y0 + th / 2 + 5, "no data", 13, theme.muted, anchor="middle")
 
-    # Month ticks along the bottom.
+    # Month ticks at the first of each labelled month, by calendar date, and the last date at the end.
     ticks = []
-    seen = set()
-    for i, d in enumerate(days):
-        if d.month in (9, 12, 3, 6) and (d.year, d.month) not in seen:
-            seen.add((d.year, d.month))
-            x = x0 + i * cw
-            ticks.append(f'<rect x="{x:.1f}" y="{y0 + th + 8}" width="1" height="6" fill="{theme.axis}"/>')
-            ticks.append(_t(x, y0 + th + 30, d.strftime("%b %Y"), 14, theme.muted))
-    last = days[-1]
-    ticks.append(_t(x0 + tw, y0 + th + 30, last.strftime("%b %Y"), 14, theme.muted, anchor="end"))
+    for first in _month_starts(days):
+        x = x0 + (first - days[0]).days * cw
+        ticks.append(f'<rect x="{x:.1f}" y="{y0 + th + 8}" width="1" height="6" fill="{theme.axis}"/>')
+        ticks.append(_t(x, y0 + th + 30, month(first), 14, theme.muted))
+    ticks.append(_t(x0 + tw, y0 + th + 30, month(days[-1]), 14, theme.muted, anchor="end"))
 
     # Legend: more short ... more long.
     sw, sg = 13, 2
@@ -500,7 +581,7 @@ def hero(theme: Theme, facts: Facts, grid: np.ndarray, days: Sequence[date]) -> 
                "on Hyperliquid.", 20, 400)  # fmt: skip
     left = [
         f'<g class="fu d1">{_mark(lx0, 112, theme, cell=9, gap=2.5)}'
-        + _t(lx0 + 44, 132, "OPEN BENCHMARK · PRE-REGISTERED", 14, theme.ink2, weight=650, spacing=1.8)
+        + _t(lx0 + 44, 132, "OPEN BENCHMARK \u00b7 PRE-REGISTERED", 14, theme.ink2, weight=650, spacing=1.8)
         + "</g>",
         _t(lx0 - 4, 238, "HerdBench", 86, theme.ink, weight=800, spacing=-3, cls="fu d2"),
         _t(lx0, 300, "Crowd signals, fact-checked.", 32, theme.ink, weight=650, spacing=-0.6, cls="fu d3"),
@@ -522,14 +603,15 @@ def hero(theme: Theme, facts: Facts, grid: np.ndarray, days: Sequence[date]) -> 
         )
         sx += max(text_width(big, 30, True), text_width(small, 14)) + 40
     left.append(f'<rect x="{lx0}" y="452" width="{sx - lx0 - 40:.0f}" height="1" fill="{theme.grid}" class="fi d5"/>')
+    notice = _t(1144, 574, NC_NOTICE, 13, theme.muted, anchor="end", cls="fi d12")
 
-    span = tw + 12
+    reach = tw + 12
     css = (
-        f".wipe{{transform:translateX({span:.0f}px);animation:wipe 2.6s cubic-bezier(.65,0,.35,1) .45s both}}"
-        f"@keyframes wipe{{from{{transform:translateX(0)}}to{{transform:translateX({span:.0f}px)}}}}"
+        f".wipe{{transform:translateX({reach:.0f}px);animation:wipe 2.6s cubic-bezier(.65,0,.35,1) .45s both}}"
+        f"@keyframes wipe{{from{{transform:translateX(0)}}to{{transform:translateX({reach:.0f}px)}}}}"
         f".scan{{opacity:0;animation:scan 2.6s cubic-bezier(.65,0,.35,1) .45s both}}"
         f"@keyframes scan{{0%{{transform:translateX(0);opacity:0}}8%{{opacity:1}}86%{{opacity:1}}"
-        f"100%{{transform:translateX({span:.0f}px);opacity:0}}}}"
+        f"100%{{transform:translateX({reach:.0f}px);opacity:0}}}}"
     )
     defs = (
         f'<defs><clipPath id="tap"><rect x="{x0 - 6:.1f}" y="{y0 - 4}" width="{tw + 12:.1f}" height="{th + 8}"/>'
@@ -551,12 +633,14 @@ def hero(theme: Theme, facts: Facts, grid: np.ndarray, days: Sequence[date]) -> 
         + cells
         + reveal
         + f'<g class="fi d12">{"".join(ticks)}</g>'
+        + notice
     )
     title = "HerdBench: crowd signals, fact-checked"
     desc = (
-        f"A tapestry of the real net positioning of the crowd, without market makers, in {rows} markets over "
-        f"{cols} days: blue where traders held more longs, red where they held more shorts. Beside it: "
-        f"HerdBench, crowd signals fact-checked; {facts.confirmed} of {len(facts.family)} signals passed."
+        f"A tapestry of the real net positioning of the crowd, without market makers, in {rows} markets on "
+        f"{len(days)} snapshot dates from {day(days[0])} to {day(days[-1])}{_gap_text(days)}: blue where traders "
+        f"held more longs, red where they held more shorts. Beside it: HerdBench, crowd signals fact-checked; "
+        f"{facts.confirmed} of {len(facts.family)} signals passed."
     )
     return _svg(w, h, title, desc, theme, css, body)
 
@@ -611,11 +695,12 @@ def how(theme: Theme, facts: Facts) -> str:
     w, h = 1200, 450
     centers = (200, 600, 1000)
     icy = 142
+    when = f"on {facts.snapshot_days} days over a year" if facts.snapshot_days else "over a year"
     steps = (
         ("Everything is public", "Hyperliquid shows every account's open positions and every trade, on a public "
          "ledger."),
-        ("Rebuild the real crowd", f"What traders really held in {len(facts.markets)} markets, every day for a year, "
-         "with market makers set aside."),
+        ("Rebuild the real crowd", f"What traders really held in {len(facts.markets)} markets {when}, with market "
+         "makers set aside."),
         ("Grade the signals", "Each popular signal is scored against that truth, under rules sealed in Bitcoin "
          "before any result existed."),
     )  # fmt: skip
@@ -653,7 +738,7 @@ def how(theme: Theme, facts: Facts) -> str:
     title = "How HerdBench works"
     desc = (
         "Three steps. Everything is public: Hyperliquid shows every account's positions and trades. Rebuild the "
-        f"real crowd: what traders held in {len(facts.markets)} markets every day, market makers set aside. "
+        f"real crowd: what traders held in {len(facts.markets)} markets {when}, market makers set aside. "
         "Grade the signals: each popular signal is scored against that truth under rules fixed in advance."
     )
     return _svg(w, h, title, desc, theme, css, body)
@@ -732,8 +817,7 @@ def scorecard(theme: Theme, facts: Facts) -> str:
             f'height="2" rx="1"/><rect x="{xl - 1:.1f}" y="{cy - 7:g}" width="2" height="14" rx="1"/>'
             f'<rect x="{xh - 1:.1f}" y="{cy - 7:g}" width="2" height="14" rx="1"/></g>'
         )
-        marks.append(_t(max(xh, x_val) + 12, cy + 5, _num(r["rho"]), 16, theme.ink, weight=650,
-                        cls=f"fi d{d + 6}", extra='font-variant-numeric="tabular-nums"'))  # fmt: skip
+        marks.append(_t(max(xh, x_val) + 12, cy + 5, _num(r["rho"]), 16, theme.ink, weight=650, cls=f"fi d{d + 6}"))
         marks.append(_chip(956, cy, r["verdict"], theme, f"fu d{d + 7}"))
         if i < len(rows) - 1:
             marks.append(f'<rect x="56" y="{cy + pitch / 2:.0f}" width="{w - 112}" height="1" fill="{theme.grid}" '
@@ -741,7 +825,7 @@ def scorecard(theme: Theme, facts: Facts) -> str:
     foot = (
         f"Within-market Spearman correlation with the net position of traders other than market makers. "
         f"{facts.confirmed} of {len(rows)} pass after correcting for testing {len(rows)} signals at once (Holm). "
-        "Binance statistics: CC BY-NC-SA 4.0."
+        + NC_NOTICE
     )
     feet = [_t(56, h - 66 + i * 22, line, 14, theme.muted, cls="fi d14") for i, line in enumerate(wrap(foot, 14, 1088))]
     css = (
@@ -782,12 +866,13 @@ def _bar(x: float, y: float, w: float, h: float, rounded: str, r: float = 4.0) -
 def insights(theme: Theme, facts: Facts) -> str:
     w, h = 1200, 500
     cw, gap, x0, y0 = 352, 24, 36, 36
-    ch = h - 2 * y0
+    ch = h - 2 * y0 - 8
     xs = [x0 + i * (cw + gap) for i in range(3)]
     cards = (
         _card1(theme, xs[0], y0, cw, ch, facts),
         _card2(theme, xs[1], y0, cw, ch, facts),
         _card3(theme, xs[2], y0, cw, ch, facts),
+        _t(x0 + 2, h - 22, NC_NOTICE, 13, theme.muted, cls="fi d12"),
     )
     css = (
         ".grow{transform-box:fill-box;animation:grow 1s cubic-bezier(.22,1,.36,1) both}"
@@ -795,13 +880,18 @@ def insights(theme: Theme, facts: Facts) -> str:
     )
     title = "Three things the data showed"
     desc = (
-        f"Funding sat at its floor rate in {round(facts.pinned_share * 100)}% of hours and scored the same as the "
-        f"price premium. Binance's all-accounts ratio tracks how many traders are long ({_num(facts.heads_rho)}) "
-        f"but not where the money is ({_num(facts.money_rho)}). Positions near liquidation forecast next week's "
+        f"Funding sat at the baseline rate in {_pct(facts.pinned_share)} of hours; it is built from the price "
+        f"premium and scores {_num(facts.funding_rho)} against the premium's {_num(facts.premium_rho)}. Binance's "
+        f"all-accounts ratio tracks how many traders are long ({_num(facts.heads_rho)}); against where the money is "
+        f"({_num(facts.money_rho)}) it is too close to call. Positions near liquidation forecast next week's "
         f"liquidations ({_num(facts.fragile_rho)}), but last week's liquidations do as well "
         f"({_num(facts.past_liq_rho)})."
     )
     return _svg(w, h, title, desc, theme, css, "".join(cards))
+
+
+def _pct(share: float) -> str:
+    return "n/a" if math.isnan(share) else f"{round(share * 100)}%"
 
 
 def _caption_size(cw: float) -> float:
@@ -820,7 +910,7 @@ def _card_frame(theme: Theme, x: float, y: float, cw: float, ch: float, kicker: 
 
 
 def _hbar(x: float, y: float, label: str, value: float, scale: float, color: str, theme: Theme, cls: str) -> str:
-    width = max(value, 0.0) * scale
+    width = 0.0 if math.isnan(value) else max(value, 0.0) * scale
     return (
         _t(x, y, label, 15, theme.ink2)
         + f'<rect x="{x:g}" y="{y + 9:g}" width="{scale:.0f}" height="10" rx="5" fill="{theme.grid}"/>'
@@ -831,24 +921,28 @@ def _hbar(x: float, y: float, label: str, value: float, scale: float, color: str
 
 
 def _card1(theme: Theme, x: float, y: float, cw: float, ch: float, facts: Facts) -> str:
-    """Funding sat at its floor: one square per percent of hours, grey when pinned."""
-    pinned = round(facts.pinned_share * 100)
-    parts = _card_frame(
-        theme, x, y, cw, ch, "FUNDING RATES",
-        f"When funding does move, it follows the price premium, and it scores the same "
-        f"({_num(facts.funding_rho)}). The premium is the cleaner{NBSP}read.",
-    )  # fmt: skip
-    parts.append(_t(x + 28, y + 112, f"{pinned}%", 56, theme.ink, weight=750, spacing=-1.5))
+    """Funding pinned at the baseline rate: one square per percent of hours, grey when pinned."""
+    same = _num(facts.funding_rho) == _num(facts.premium_rho)
+    text = (
+        f"Funding is built from the price premium, so the two score the same ({_num(facts.funding_rho)}) by "
+        f"design. The premium carries the signal without the{NBSP}clamp."
+        if same
+        else f"Funding scores {_num(facts.funding_rho)}; the price premium it is built from scores "
+        f"{_num(facts.premium_rho)}. The premium carries the signal without the{NBSP}clamp."
+    )
+    parts = _card_frame(theme, x, y, cw, ch, "FUNDING RATES", text)
+    pinned = None if math.isnan(facts.pinned_share) else round(facts.pinned_share * 100)
+    parts.append(_t(x + 28, y + 112, _pct(facts.pinned_share), 56, theme.ink, weight=750, spacing=-1.5))
     parts.append(_t(x + 30, y + 142, CAPTION1, _caption_size(cw), theme.ink2, weight=600))
     cells = []
     for k in range(100):
         cx, cy = x + 30 + 13.2 * (k % 20), y + 176 + 13.2 * (k // 20)
-        fill = theme.muted if k < pinned else theme.blue
+        fill = theme.grid if pinned is None else (theme.muted if k < pinned else theme.blue)
         cells.append(f'<rect x="{cx:.1f}" y="{cy:.1f}" width="10.2" height="10.2" rx="2.5" fill="{fill}"/>')
     parts.append(f'<g class="fi d6">{"".join(cells)}</g>')
     parts.append(
         f'<rect x="{x + 30:g}" y="{y + 252}" width="10" height="10" rx="2.5" fill="{theme.muted}"/>'
-        + _t(x + 46, y + 261, "at the floor", 14, theme.muted)
+        + _t(x + 46, y + 261, "at baseline", 14, theme.muted)
         + f'<rect x="{x + 140:g}" y="{y + 252}" width="10" height="10" rx="2.5" fill="{theme.blue}"/>'
         + _t(x + 156, y + 261, "moving", 14, theme.muted)
     )
@@ -856,11 +950,11 @@ def _card1(theme: Theme, x: float, y: float, cw: float, ch: float, facts: Facts)
 
 
 def _card2(theme: Theme, x: float, y: float, cw: float, ch: float, facts: Facts) -> str:
-    """Binance's ratio counts heads, not money."""
+    """Binance's ratio follows heads; against the money it is too close to call."""
     parts = _card_frame(
         theme, x, y, cw, ch, "LONG/SHORT RATIOS",
-        "Binance's all-accounts ratio follows how many traders are long, not where the money is. On its own "
-        "it cannot tell you which way the crowd is betting.",
+        "Binance's all-accounts ratio follows how many traders are long, not where the money is. Against the "
+        f"money, it was too close to{NBSP}call.",
     )  # fmt: skip
     parts.append(_t(x + 28, y + 100, "Heads, not", 42, theme.ink, weight=750, spacing=-1))
     parts.append(_t(x + 28, y + 146, "money", 42, theme.ink, weight=750, spacing=-1))
@@ -905,16 +999,15 @@ def timeline(theme: Theme, facts: Facts) -> str:
     w, h = 1200, 360
     y = 132
     xs = (210, 600, 990)
-    gapd = SCORED_AT - SEALED_AT
-    hours = gapd.seconds // 3600
-    span_label = f"{gapd.days} days {hours} hours later"
+    hours = round((SCORED_AT - SEALED_AT).total_seconds() / 3600)
+    span_label = f"{hours // 24} days {hours % 24} hours later"
     items = (
-        ("17 NOV 2026, 22:07 UTC", "Plan sealed in Bitcoin",
+        (stamp(SEALED_AT), "Plan sealed in Bitcoin",
          f"Every test, threshold and verdict rule written down, then anchored in block{NBSP}{SEALED_BLOCK:,}."),
-        ("23 NOV 2026, 14:51 UTC", "First look at the truth",
-         "The scoring code is frozen, then compared with what traders really held for the first time."),
-        (PUBLISHED_AT.strftime("%d %b %Y, %H:%M UTC").upper(), "Results published",
-         f"Every table and figure released, each file hashed and rebuildable from public{NBSP}data."),
+        (stamp(SCORED_AT), "Signals meet the truth",
+         "The frozen scoring code compares each signal with what traders really held, for the first time."),
+        (stamp(PUBLISHED_AT), "Results published",
+         f"Every table and figure released, each file hashed, with the code that rebuilds it from public{NBSP}data."),
     )  # fmt: skip
     out = [
         f'<rect x="{xs[0]}" y="{y - 1}" width="{xs[2] - xs[0]}" height="2" fill="{theme.grid}"/>',
@@ -947,9 +1040,10 @@ def timeline(theme: Theme, facts: Facts) -> str:
     )
     title = "Sealed before any result existed"
     desc = (
-        f"Timeline. 17 November 2026, 22:07 UTC: the plan is anchored in Bitcoin block {SEALED_BLOCK:,}. "
-        f"{span_label.capitalize()}, on 23 November 2026 at 14:51 UTC, the frozen scoring code is run against the "
-        "truth for the first time. The results are then published, every file hashed."
+        f"Timeline. {stamp(SEALED_AT)}: the plan is anchored in Bitcoin block {SEALED_BLOCK:,}. "
+        f"{span_label.capitalize()}, at {stamp(SCORED_AT)}, the frozen scoring code compares the signals with what "
+        f"traders really held for the first time. At {stamp(PUBLISHED_AT)} the results are published, every file "
+        "hashed."
     )
     return _svg(w, h, title, desc, theme, css, "".join(out))
 
@@ -971,9 +1065,11 @@ def _icon(i: int, cx: float, cy: float, color: str) -> str:
 def social(facts: Facts, grid: np.ndarray, days: Sequence[date], theme: Theme = DARK) -> str:
     """The 1280 by 640 card shown when the repository link is shared. Static: a PNG is made from it."""
     w, h = 1280, 640
-    rows, cols = grid.shape
-    cw, pitch, ch = 1.6, 14, 12
-    x0, y0 = w - 76 - cols * cw, 112
+    rows = grid.shape[0]
+    offsets, span = calendar(days)
+    tw, pitch, ch = 488.0, 14, 12
+    cw = tw / span
+    x0, y0 = w - 76 - tw, 112
     th = rows * pitch - (pitch - ch)
     color = _levels(theme)
     lx = 80
@@ -996,7 +1092,7 @@ def social(facts: Facts, grid: np.ndarray, days: Sequence[date], theme: Theme = 
         body.append(_t(sx, 530, big, 38, theme.ink, weight=750, spacing=-0.5) + _t(sx, 560, small, 17, theme.muted))
         sx += max(text_width(big, 38, True), text_width(small, 17)) + 44
     body.append(_t(x0, y0 - 24, "What the crowd really held", 17, theme.ink, weight=650))
-    sw, sg, tw = 14, 2, cols * cw
+    sw, sg = 14, 2
     end_x = x0 + tw - text_width("long", 15) - 8
     lx2 = end_x - (11 * sw + 10 * sg)
     for i, k in enumerate(range(-5, 6)):
@@ -1005,10 +1101,13 @@ def social(facts: Facts, grid: np.ndarray, days: Sequence[date], theme: Theme = 
         )
     body.append(_t(lx2 - 8, y0 - 25, "short", 15, theme.ink2, anchor="end"))
     body.append(_t(x0 + tw, y0 - 25, "long", 15, theme.ink2, anchor="end"))
-    body.append(_cells(grid, x0, y0, cw, pitch, ch, theme))
-    body.append(_t(x0, y0 + th + 34, f"{days[0]:%b %Y}", 16, theme.muted))
-    body.append(_t(x0 + cols * cw, y0 + th + 34, f"{days[-1]:%b %Y}", 16, theme.muted, anchor="end"))
+    body.append(_cells(grid, x0, y0, cw, pitch, ch, theme, offsets))
+    for start, n in gaps(offsets):
+        body.append(_t(x0 + (start + n / 2) * cw, y0 + th / 2 + 5, "no data", 14, theme.muted, anchor="middle"))
+    body.append(_t(x0, y0 + th + 34, month(days[0]), 16, theme.muted))
+    body.append(_t(x0 + tw, y0 + th + 34, month(days[-1]), 16, theme.muted, anchor="end"))
     body.append(_t(w - 76, h - 44, "github.com/z33shxn/herdbench", 17, theme.muted, anchor="end"))
+    body.append(_t(lx, h - 44, NC_NOTICE, 14, theme.muted))
     title = "HerdBench: crowd signals, fact-checked"
     desc = (
         f"Social card. HerdBench, crowd signals fact-checked, tested against the real positions of every trader on "
@@ -1042,13 +1141,21 @@ def render_all(facts: Facts, panel: pd.DataFrame) -> dict[str, str]:
 
 
 def build(results: Path, out: Path, panel: pd.DataFrame | None = None) -> list[Path]:
-    """Write every README image into ``out`` from the results folder (and the bundled truth panel)."""
+    """Write every README image into ``out`` from a results folder.
+
+    The hero and share card use the truth panel in the results folder when there is one (a fresh build), and the
+    panel bundled with the package otherwise.
+    """
     from herdbench.pipeline import write_text
 
     if panel is None:
-        from herdbench.api import load_truth_panel
+        local = results / "truth_panel.parquet"
+        if local.exists():
+            panel = pd.read_parquet(local)
+        else:
+            from herdbench.api import load_truth_panel
 
-        panel = load_truth_panel(cohort="non_mm", as_pandas=True)  # type: ignore[assignment]
+            panel = load_truth_panel(cohort="non_mm", as_pandas=True)  # type: ignore[assignment]
     assert panel is not None
     facts = load_facts(results)
     out.mkdir(parents=True, exist_ok=True)

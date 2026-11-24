@@ -2,3 +2,8 @@ HerdBench
 Copyright 2026 Mohammed Zeeshan
 
 This product includes software developed by Mohammed Zeeshan.
+
+The data files bundled with the package (src/herdbench/data/) are licensed CC BY 4.0, not Apache-2.0. They are
+built in part from Ironflow's hyperliquid-funding dataset (CC BY 4.0). Statistics derived from Binance Vision
+data (results/binance/ and the images that show them) are licensed CC BY-NC-SA 4.0, and statistics from FINRA
+short interest (results/finra/) follow FINRA's terms. See docs/data.md.

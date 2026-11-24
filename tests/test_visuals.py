@@ -3,10 +3,17 @@ long dashes. The committed files in docs/visuals must be exactly what ``herdbenc
 
 from __future__ import annotations
 
+import hashlib
+import os
 import re
+import shutil
+import subprocess
+import sys
 import xml.etree.ElementTree as ET
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -120,6 +127,8 @@ def test_timeline_dates_match_the_timestamps_record():
 
 def test_text_helpers():
     assert visuals.wrap("a b c", 10, 1000) == ["a b c"]
+    assert visuals.month(date(2025, 9, 1)) == "Sep 2025"  # English whatever the locale
+    assert visuals.month(date(2026, 11, 23), year=False) == "Nov"
     lines = visuals.wrap("the quick brown fox jumps over the lazy dog again and again", 16, 120)
     assert len(lines) > 1
     assert all(visuals.text_width(line, 16) <= 120 for line in lines)
@@ -153,3 +162,129 @@ def test_the_share_card_png_is_1280_by_640():
     assert head[:8] == bytes([137, 80, 78, 71, 13, 10, 26, 10])  # the PNG signature
     assert int.from_bytes(head[16:20], "big") == 1280
     assert int.from_bytes(head[20:24], "big") == 640
+
+
+@needs_results
+def test_scorecard_rows_carry_their_own_name_value_and_verdict(drawn):
+    """Each row's name, value and verdict sit on one line, and the rows run in the results' order (by rho)."""
+    facts, _, images = drawn
+    root = ET.fromstring(images["scorecard-light.svg"])
+    texts = [(float(t.get("y", "0")), "".join(t.itertext())) for t in root.iter(f"{SVG}text")]
+    rows_y = []
+    for r in facts.family:
+        ys = [y for y, s in texts if s == visuals.PLAIN[r["proxy"]][0]]
+        assert len(ys) == 1, r["proxy"]
+        rows_y.append(ys[0])
+    assert rows_y == sorted(rows_y)
+    for r, y in zip(facts.family, rows_y, strict=True):
+        line = {s for ty, s in texts if abs(ty - y) <= 9}
+        assert visuals._num(r["rho"]) in line, r["proxy"]
+        assert visuals.VERDICTS[r["verdict"]][0] in line, r["proxy"]
+
+
+@needs_results
+def test_everything_is_visible_with_motion_off(drawn):
+    """Outside @keyframes no rule hides anything except the decorative scan line and travelling dots, and the
+    hero's reveal cover rests beyond the tapestry."""
+    for name, svg in drawn[2].items():
+        css = re.search(r"<style>(.*?)</style>", svg, re.S)
+        assert css is not None, name
+        rules = re.sub(r"@keyframes [a-z]+\{(?:[^{}]*\{[^{}]*\})*\}", "", css.group(1))
+        for selector, declarations in re.findall(r"([^{}]+)\{([^{}]*)\}", rules):
+            flat = declarations.replace(" ", "")
+            if "opacity:0;" in flat + ";" or "scale(0" in flat or "scaleX(0" in flat:
+                assert selector.strip() in (".scan", ".flow"), (name, selector)
+    hero = drawn[2]["hero-light.svg"]
+    offset = re.search(r"\.wipe\{transform:translateX\((\d+(?:\.\d+)?)px\)", hero)
+    width = re.search(r'<rect class="wipe" x="[^"]+" y="[^"]+" width="([^"]+)"', hero)
+    assert offset is not None
+    assert width is not None
+    assert float(offset.group(1)) >= float(width.group(1))
+
+
+@needs_results
+def test_stagger_delays_come_after_the_rules_they_delay(drawn):
+    """An ``animation`` shorthand resets the delay, so the .dN rules must follow every image's own rules."""
+    for name, svg in drawn[2].items():
+        if name == "social.svg":
+            continue
+        style = svg[svg.index("<style>") : svg.index("@media (prefers-reduced-motion")]
+        assert style.index(".d1{") > style.rfind("animation:"), name
+
+
+@needs_results
+def test_timeline_shows_the_recorded_times(drawn):
+    svg = drawn[2]["timeline-light.svg"]
+    for t in (visuals.SEALED_AT, visuals.SCORED_AT, visuals.PUBLISHED_AT):
+        assert f">{visuals.stamp(t)}</text>" in svg
+    assert f"block{visuals.NBSP}{visuals.SEALED_BLOCK:,}" in svg
+    assert ">5 days 17 hours later</text>" in svg  # 5 days 16 hours 45 minutes, to the nearest hour
+
+
+def test_published_time_is_the_commit_that_added_the_results():
+    if shutil.which("git") is None:
+        pytest.skip("git is not installed")
+    shown = subprocess.run(["git", "show", "-s", "--format=%cI", "42f6fa8"], cwd=ROOT, capture_output=True, text=True)
+    if shown.returncode != 0:
+        pytest.skip("git history is not available in this checkout")
+    assert datetime.fromisoformat(shown.stdout.strip()) == visuals.PUBLISHED_AT
+
+
+def test_dates_never_depend_on_the_locale():
+    source = Path(visuals.__file__).read_text(encoding="utf-8")
+    assert "strftime" not in source
+    assert "%b" not in source
+
+
+def test_tapestry_cells_round_trip_and_keep_a_calendar_gap():
+    """Every non-missing cell is drawn exactly once, in its level's colour, at its calendar position."""
+    days = [date(2025, 1, 1) + timedelta(days=k) for k in (0, 1, 2, 20, 21)]
+    grid = np.array([[0.0, 0.2, 0.2, -0.1, np.nan], [0.05, 0.05, 0.05, 0.05, 0.05]])
+    offsets, span = visuals.calendar(days)
+    assert span == 22
+    assert visuals.gaps(offsets) == [(3, 17)]
+    svg = visuals._cells(grid, 0.0, 0.0, 1.0, 10, 8, visuals.LIGHT, offsets)
+    level_of = {color: level for level, color in visuals._levels(visuals.LIGHT).items()}
+    seen: dict[tuple[int, int], int] = {}
+    for fill, path in re.findall(r'<path fill="([^"]+)" d="([^"]+)"/>', svg):
+        for x, y, run in re.findall(r"M([\d.]+) ([\d.]+)h([\d.]+)v", path):
+            row = int(float(y) // 10)
+            for off in range(round(float(x)), round(float(x) + float(run))):
+                assert (row, off) not in seen
+                seen[(row, off)] = level_of[fill]
+    expected = {
+        (r, offsets[c]): visuals._level(float(grid[r, c]))
+        for r in range(grid.shape[0])
+        for c in range(grid.shape[1])
+        if not np.isnan(grid[r, c])
+    }
+    assert seen == expected
+
+
+def test_build_draws_from_a_fresh_pipeline_run(built, tmp_path):
+    """The command works on the pipeline's own output, using that run's truth panel."""
+    written = visuals.build(built["paths"].results, tmp_path / "visuals")
+    themed = {f"{n}-{t}.svg" for n in visuals.NAMES for t in ("light", "dark")}
+    assert {p.name for p in written} == themed | {"social.svg"}
+    for p in written:
+        ET.fromstring(p.read_bytes())
+        assert "_" not in p.read_text(encoding="utf-8")
+
+
+@needs_results
+def test_images_do_not_depend_on_the_hash_seed_or_the_locale(drawn):
+    code = (
+        "import hashlib, locale, sys\n"
+        "from pathlib import Path\n"
+        "locale.setlocale(locale.LC_ALL, '')\n"
+        "from herdbench import visuals\n"
+        "from herdbench.api import load_truth_panel\n"
+        "facts = visuals.load_facts(Path(sys.argv[1]))\n"
+        "images = visuals.render_all(facts, load_truth_panel(cohort='non_mm', as_pandas=True))\n"
+        "print(hashlib.sha256(''.join(images[k] for k in sorted(images)).encode()).hexdigest())\n"
+    )
+    env = dict(os.environ, PYTHONHASHSEED="20261124")
+    done = subprocess.run([sys.executable, "-c", code, str(RESULTS)], capture_output=True, text=True, env=env)
+    assert done.returncode == 0, done.stderr[-2000:]
+    images = drawn[2]
+    assert done.stdout.strip() == hashlib.sha256("".join(images[k] for k in sorted(images)).encode()).hexdigest()

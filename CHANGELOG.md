@@ -9,6 +9,28 @@ design are listed in [docs/deviations.md](docs/deviations.md).
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-24
+
+Fixes from a full audit of 1.1.0. No analysis parameter, statistic or published result changed.
+
+### Fixed
+
+- The README no longer overstates three findings. Inconclusive Binance ratios are described as too close to call,
+  not as having no link; momentum is described as a within-market time-series link that disappears in the daily
+  cross-section and the two-way fixed-effects slope; the premium has the highest score, but no ranking is claimed.
+- Coverage is stated: the source archive has no snapshots from 25 October to 14 December 2025 and no fills on 38
+  days. The hero image places dates on the calendar, so the gap is visible and the month ticks are true.
+- Funding's pinned level is called the baseline rate, not a floor (funding often sits below it).
+- Images that show Binance-derived statistics (hero, scorecard, insights, share card) are marked CC BY-NC-SA 4.0,
+  as is the README's headline table; the results badge no longer says CC BY only.
+- `write_manifest` records the registered pre-registration hash from its timestamp record, and the working-tree
+  copy's hash separately (`preregistration_file_sha256`).
+- The 1.0.0 entry below is dated to its release, 2026-11-23, and states the registration time in UTC.
+- Images: stagger delays now apply, muted text meets WCAG AA contrast, month names no longer depend on the
+  locale, the timeline's labels come from the recorded times, and the scorecard rows are tested for wiring.
+- `herdbench visuals` stops with a clear message when it finds no results, and draws the hero from the results
+  folder's own truth panel when there is one.
+
 ## [1.1.0] - 2026-11-24
 
 Presentation only: no analysis parameter, statistic or published result changed.
@@ -32,9 +54,10 @@ Presentation only: no analysis parameter, statistic or published result changed.
   in `docs/timestamps/prereg-v1.txt`; see `docs/timestamps/README.md`.
 - CI checks out the full history, so the typography test can compare against the registered commits.
 
-## [1.0.0] - 2026-11-19
+## [1.0.0] - 2026-11-23
 
-First release. The design was registered on 2026-11-18, before any proxy was compared with the truth.
+First release. The design was registered on 17 November 2026 at 21:42 UTC (18 November in the author's time
+zone, UTC+5:30), before any proxy was compared with the truth.
 Results: see [docs/results.md](docs/results.md).
 
 ### Added
@@ -184,6 +207,7 @@ Results: see [docs/results.md](docs/results.md).
 - Packaging: Python 3.10 or later, Apache-2.0, typed (`py.typed`), the `report` and `dev` extras, and the
   `herdbench` console script.
 
-[Unreleased]: https://github.com/z33shxn/herdbench/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/z33shxn/herdbench/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/z33shxn/herdbench/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/z33shxn/herdbench/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/z33shxn/herdbench/releases/tag/v1.0.0

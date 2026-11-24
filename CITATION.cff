@@ -10,7 +10,7 @@ abstract: >-
   Hyperliquid, a derivatives venue where all positions are public. Sub-accounts
   are merged into their master account, market makers and protocol accounts are
   removed, and net positioning and crowding metrics are computed for each
-  snapshot date, market and cohort. Every parameter was pre-registered and
+  snapshot date, market and cohort. Every registered parameter was fixed and
   timestamped before any signal was compared with the truth. The package
   contains the truth pipeline, the proxies, the grading statistics and integrity
   gates, a command-line interface, and a function that grades any signal
@@ -18,7 +18,7 @@ abstract: >-
 authors:
   - family-names: Zeeshan
     given-names: Mohammed
-version: "1.1.0"
+version: "1.1.1"
 date-released: "2026-11-24"
 license: Apache-2.0
 repository-code: "https://github.com/z33shxn/herdbench"

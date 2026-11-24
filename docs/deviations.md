@@ -1,8 +1,8 @@
 # Deviations
 
 Every departure from [the pre-registration](preregistration.md) is listed here with its reason and its effect.
-This list was written before any proxy was compared with the truth and is reproduced verbatim in
-[results.md](results.md).
+This list was written before any proxy was compared with the truth; the results report reproduces it as its
+section 10.
 
 1. **The Barone-Lillo appendix was not run.** Section 11 lists their TWAP coefficient (θ = -0.0177, s.e. 0.0010,
    arXiv 2606.15715) as an appendix that gates nothing. Reproducing it means rebuilding both of their metaorder
