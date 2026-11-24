@@ -181,7 +181,7 @@ confirmatory proxies are Holm-corrected together.
   [0.022, 0.152] against the same truth (a secondary statistic).
 * **Momentum.** Seven-day momentum tracks net positioning within markets over time (0.136), and the link held under
   every alternative market-maker rule, in both halves of the sample and on the published panel. It is a time-series
-  link: the daily cross-sectional correlation is -0.011 (p = 0.73), and the two-way fixed-effects slope, which nets
+  link: the daily cross-sectional correlation is -0.011 (p = 0.72), and the two-way fixed-effects slope, which nets
   out common daily moves, is 0.001 (s.e. 0.021). The positive control (momentum against trend followers) comes out
   above zero, as it must.
 * **Exchange long/short ratios.** No Binance ratio is confirmed against net positioning. All three are
