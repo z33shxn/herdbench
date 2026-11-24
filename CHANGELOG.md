@@ -9,6 +9,18 @@ design are listed in [docs/deviations.md](docs/deviations.md).
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-11-24
+
+### Changed
+
+- The hero image and the share card draw one column per snapshot date, so the tapestry has no empty block. A
+  hairline seam through the tapestry and a break mark on its axis show where the source archive skips
+  25 October to 14 December 2025.
+
+### Fixed
+
+- The README gives the momentum cross-sectional p-value as 0.72, as `results/directional_primary.csv` has it.
+
 ## [1.1.1] - 2026-11-24
 
 Fixes from a full audit of 1.1.0. No analysis parameter, statistic or published result changed.
@@ -207,7 +219,8 @@ Results: see [docs/results.md](docs/results.md).
 - Packaging: Python 3.10 or later, Apache-2.0, typed (`py.typed`), the `report` and `dev` extras, and the
   `herdbench` console script.
 
-[Unreleased]: https://github.com/z33shxn/herdbench/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/z33shxn/herdbench/compare/v1.1.2...HEAD
+[1.1.2]: https://github.com/z33shxn/herdbench/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/z33shxn/herdbench/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/z33shxn/herdbench/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/z33shxn/herdbench/releases/tag/v1.0.0

@@ -3,7 +3,7 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/visuals/hero-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="docs/visuals/hero-light.svg">
-  <img src="docs/visuals/hero-light.svg" width="100%" alt="HerdBench. Crowd signals, fact-checked. Beside the title, a tapestry of what the crowd really held in 30 markets on 305 snapshot dates from 28 August 2025 to 18 August 2026, with a gap where the source archive has no snapshots (25 October to 14 December 2025): blue where traders held more longs, red where they held more shorts. 30 markets, 297 days scored, 2 of 7 signals passed.">
+  <img src="docs/visuals/hero-light.svg" width="100%" alt="HerdBench. Crowd signals, fact-checked. Beside the title, a tapestry of what the crowd really held in 30 markets, one column for each of 305 snapshot dates from 28 August 2025 to 18 August 2026, with a thin break where the source archive skips 25 October to 14 December 2025: blue where traders held more longs, red where they held more shorts. 30 markets, 297 days scored, 2 of 7 signals passed.">
 </picture>
 
 <br>

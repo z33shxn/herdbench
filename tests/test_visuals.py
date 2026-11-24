@@ -261,6 +261,19 @@ def test_tapestry_cells_round_trip_and_keep_a_calendar_gap():
     assert seen == expected
 
 
+@needs_results
+def test_the_tapestry_has_no_empty_block_and_marks_the_archive_gap(drawn):
+    """One column per snapshot date; a seam and a break mark stand where the archive skips weeks."""
+    _, panel, images = drawn
+    _, _, days = visuals.tapestry_grid(panel, drawn[0].markets)
+    cuts = visuals.breaks(days)
+    assert cuts  # the archive skips 25 October to 14 December 2025
+    for name in ("hero-light.svg", "hero-dark.svg", "social.svg"):
+        svg = images[name]
+        assert "no data" not in svg, name
+        assert svg.count('class="seam"') == len(cuts), name
+
+
 def test_build_draws_from_a_fresh_pipeline_run(built, tmp_path):
     """The command works on the pipeline's own output, using that run's truth panel."""
     written = visuals.build(built["paths"].results, tmp_path / "visuals")

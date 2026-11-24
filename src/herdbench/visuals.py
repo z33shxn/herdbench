@@ -522,14 +522,27 @@ def gaps(offsets: Sequence[int], min_days: int = 14) -> list[tuple[int, int]]:
     return [(a + 1, b - a - 1) for a, b in itertools.pairwise(offsets) if b - a - 1 >= min_days]
 
 
-def _month_starts(days: Sequence[date], months: Sequence[int] = (9, 12, 3, 6)) -> list[date]:
-    """The first day of each listed month inside the dates' span."""
-    out, y, m = [], days[0].year, days[0].month
-    while date(y, m, 1) <= days[-1]:
-        if date(y, m, 1) >= days[0] and m in months:
-            out.append(date(y, m, 1))
-        y, m = (y + 1, 1) if m == 12 else (y, m + 1)
-    return out
+def breaks(days: Sequence[date], min_days: int = 14) -> list[int]:
+    """Indexes of the snapshot dates that follow a run of at least ``min_days`` days without a snapshot."""
+    return [i for i in range(1, len(days)) if (days[i] - days[i - 1]).days - 1 >= min_days]
+
+
+def _seams(cuts: Sequence[int], x0: float, y0: float, cw: float, th: float, theme: Theme) -> str:
+    """A hairline seam through the tapestry where the archive skips weeks."""
+    return "".join(
+        f'<rect class="seam" x="{x0 + i * cw - 1:.1f}" y="{y0 - 2:g}" width="2" height="{th + 4:g}" '
+        f'fill="{theme.surface}"/>'
+        for i in cuts
+    )
+
+
+def _break_marks(cuts: Sequence[int], x0: float, cw: float, y: float, theme: Theme) -> str:
+    """A broken-axis mark (two short slanted strokes) under each seam."""
+    return "".join(
+        f'<path d="M{x0 + i * cw - 5:.1f} {y + 4:g}l3 -8M{x0 + i * cw + 1:.1f} {y + 4:g}l3 -8" fill="none" '
+        f'stroke="{theme.muted}" stroke-width="1.5" stroke-linecap="round"/>'
+        for i in cuts
+    )
 
 
 def _gap_text(days: Sequence[date]) -> str:
@@ -539,29 +552,33 @@ def _gap_text(days: Sequence[date]) -> str:
         f"{day(days[0] + timedelta(days=start))} to {day(days[0] + timedelta(days=start + n - 1))}"
         for start, n in gaps(offsets)
     ]
-    return f", none from {' or '.join(parts)}" if parts else ""
+    return f", none from {' or '.join(parts)} (a thin break marks the skip)" if parts else ""
 
 
 def hero(theme: Theme, facts: Facts, grid: np.ndarray, days: Sequence[date]) -> str:
     w, h = 1200, 600
-    rows = grid.shape[0]
-    offsets, span = calendar(days)
+    rows, cols = grid.shape
     tw, pitch, ch = 579.5, 13, 11
-    cw = tw / span
+    cw = tw / cols  # one column per snapshot date
     x0, y0 = 1144 - tw, 112
     th = rows * pitch - (pitch - ch)
     color = _levels(theme)
-    cells = _cells(grid, x0, y0, cw, pitch, ch, theme, offsets)
-    for start, n in gaps(offsets):  # an archive gap is labelled where it falls
-        cells += _t(x0 + (start + n / 2) * cw, y0 + th / 2 + 5, "no data", 13, theme.muted, anchor="middle")
+    cuts = breaks(days)
+    cells = _cells(grid, x0, y0, cw, pitch, ch, theme, list(range(cols))) + _seams(cuts, x0, y0, cw, th, theme)
 
-    # Month ticks at the first of each labelled month, by calendar date, and the last date at the end.
+    # Month ticks at the first snapshot of each labelled month, the last date at the end, and a break mark where
+    # the archive skips weeks (it stands in for the tick there).
     ticks = []
-    for first in _month_starts(days):
-        x = x0 + (first - days[0]).days * cw
-        ticks.append(f'<rect x="{x:.1f}" y="{y0 + th + 8}" width="1" height="6" fill="{theme.axis}"/>')
-        ticks.append(_t(x, y0 + th + 30, month(first), 14, theme.muted))
+    seen: set[tuple[int, int]] = set()
+    for i, d in enumerate(days):
+        if d.month in (9, 12, 3, 6) and (d.year, d.month) not in seen:
+            seen.add((d.year, d.month))
+            x = x0 + i * cw
+            if i not in cuts:
+                ticks.append(f'<rect x="{x:.1f}" y="{y0 + th + 8}" width="1" height="6" fill="{theme.axis}"/>')
+            ticks.append(_t(x, y0 + th + 30, month(d), 14, theme.muted))
     ticks.append(_t(x0 + tw, y0 + th + 30, month(days[-1]), 14, theme.muted, anchor="end"))
+    ticks.append(_break_marks(cuts, x0, cw, y0 + th + 11, theme))
 
     # Legend: more short ... more long.
     sw, sg = 13, 2
@@ -637,8 +654,9 @@ def hero(theme: Theme, facts: Facts, grid: np.ndarray, days: Sequence[date]) -> 
     )
     title = "HerdBench: crowd signals, fact-checked"
     desc = (
-        f"A tapestry of the real net positioning of the crowd, without market makers, in {rows} markets on "
-        f"{len(days)} snapshot dates from {day(days[0])} to {day(days[-1])}{_gap_text(days)}: blue where traders "
+        f"A tapestry of the real net positioning of the crowd, without market makers, in {rows} markets, one "
+        f"column for each of {len(days)} snapshot dates from {day(days[0])} to {day(days[-1])}{_gap_text(days)}: "
+        f"blue where traders "
         f"held more longs, red where they held more shorts. Beside it: HerdBench, crowd signals fact-checked; "
         f"{facts.confirmed} of {len(facts.family)} signals passed."
     )
@@ -1065,10 +1083,9 @@ def _icon(i: int, cx: float, cy: float, color: str) -> str:
 def social(facts: Facts, grid: np.ndarray, days: Sequence[date], theme: Theme = DARK) -> str:
     """The 1280 by 640 card shown when the repository link is shared. Static: a PNG is made from it."""
     w, h = 1280, 640
-    rows = grid.shape[0]
-    offsets, span = calendar(days)
+    rows, cols = grid.shape
     tw, pitch, ch = 488.0, 14, 12
-    cw = tw / span
+    cw = tw / cols  # one column per snapshot date
     x0, y0 = w - 76 - tw, 112
     th = rows * pitch - (pitch - ch)
     color = _levels(theme)
@@ -1101,9 +1118,9 @@ def social(facts: Facts, grid: np.ndarray, days: Sequence[date], theme: Theme = 
         )
     body.append(_t(lx2 - 8, y0 - 25, "short", 15, theme.ink2, anchor="end"))
     body.append(_t(x0 + tw, y0 - 25, "long", 15, theme.ink2, anchor="end"))
-    body.append(_cells(grid, x0, y0, cw, pitch, ch, theme, offsets))
-    for start, n in gaps(offsets):
-        body.append(_t(x0 + (start + n / 2) * cw, y0 + th / 2 + 5, "no data", 14, theme.muted, anchor="middle"))
+    cuts = breaks(days)
+    body.append(_cells(grid, x0, y0, cw, pitch, ch, theme, list(range(cols))) + _seams(cuts, x0, y0, cw, th, theme))
+    body.append(_break_marks(cuts, x0, cw, y0 + th + 12, theme))
     body.append(_t(x0, y0 + th + 34, month(days[0]), 16, theme.muted))
     body.append(_t(x0 + tw, y0 + th + 34, month(days[-1]), 16, theme.muted, anchor="end"))
     body.append(_t(w - 76, h - 44, "github.com/z33shxn/herdbench", 17, theme.muted, anchor="end"))

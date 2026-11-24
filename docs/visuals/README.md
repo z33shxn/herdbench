@@ -12,7 +12,7 @@ herdbench visuals --out docs/visuals
 
 | Image | What it shows | Drawn from |
 |---|---|---|
-| `hero` | Net positioning of the crowd without market makers, ni(non_mm), in the 30 primary markets on every published snapshot date, rows sorted from most net long to most net short and columns placed by calendar date, so the archive's gap (25 October to 14 December 2025) shows as a gap; beside it, the count of signals that passed | `src/herdbench/data/truth_panel.parquet`, `results/score_summary.json`, `results/binance/primary_family.csv` |
+| `hero` | Net positioning of the crowd without market makers, ni(non_mm), in the 30 primary markets: rows sorted from most net long to most net short, one column per published snapshot date, with a hairline seam and an axis break mark where the archive has no snapshots (25 October to 14 December 2025); beside it, the count of signals that passed | `src/herdbench/data/truth_panel.parquet`, `results/score_summary.json`, `results/binance/primary_family.csv` |
 | `how` | The three steps of the study | `results/score_summary.json`, `results/truth_panel_summary.json` |
 | `scorecard` | The seven confirmatory proxies: mean within-market Spearman ρ, 95% interval and verdict | `results/binance/primary_family.csv` |
 | `insights` | Funding pinned at the baseline rate; Binance's global ratio against account and money imbalance; fragility against past liquidations | `results/directional_primary.csv`, `results/binance/cross_venue.csv`, `results/binance/primary_family.csv`, `results/liquidation_target.csv` |

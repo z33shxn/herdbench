@@ -39,7 +39,7 @@ Two rules hold for every source:
 - **Coverage:** position snapshots from 28 August 2025 to 18 August 2026 on 305 dates. The mirror has no
   snapshot from 25 October to 14 December 2025 (51 days), though fills continue, and no fill file on 38 days of
   the period. Truth cells and proxies that need a missing snapshot or fill are missing, and the hero image on
-  the front page shows the snapshot gap as a gap.
+  the front page marks the snapshot gap with a thin break.
 - **Code:** `src/herdbench/sources/hfmirror.py`, run by `herdbench fetch --only mirror`.
 
 | Files in the mirror | How HerdBench reads them | Stored as |
